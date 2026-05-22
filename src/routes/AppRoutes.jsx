@@ -7,6 +7,7 @@ import Attendance from "../pages/dashboard/Attendance";
 import Settings from "../pages/dashboard/Settings";
 import DashboardLayout from "../components/layout/DashboardLayout";
 
+
 function AppRoutes() {
   return (
     <BrowserRouter>
@@ -21,6 +22,7 @@ function AppRoutes() {
           <Route path="departments" element={<Departments />} />
           <Route path="attendance" element={<Attendance />} />
           <Route path="settings" element={<Settings />} />
+          
         </Route>
       </Routes>
     </BrowserRouter>
