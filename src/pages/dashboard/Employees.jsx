@@ -1,78 +1,93 @@
 import { useState, useEffect } from "react";
+import {
+  getEmployees,
+  createEmployee,
+  deleteEmployee,
+  updateEmployee,
+} from "../../services/api";
+
 import EmployeeTable from "../../components/employees/EmployeeTable";
 import AddEmployeeModal from "../../components/employees/AddEmployeeModal";
 import "../../components/employees/Employees.css";
 
-const defaultEmployees = [
-  {
-    id: 1,
-    name: "Yerramchetti Thejaswi",
-    email: "yteju.14@gmail.com",
-    role: "UI Developer",
-    department: "Front end developer",
-    status: "Active",
-    joined_date: "2025-01-03",
-  },
-  {
-    id: 2,
-    name: "THEJASWI",
-    email: "thejaswi@gmail.com",
-    role: "UI",
-    department: "Developer",
-    status: "Active",
-    joined_date: "2025-01-10",
-  },
-];
-
 const Employees = () => {
-  const [employees, setEmployees] = useState(() => {
-    const savedEmployees = localStorage.getItem("employees");
-    return savedEmployees ? JSON.parse(savedEmployees) : defaultEmployees;
-  });
-
+  const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // Save employees in browser storage
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Fetch employees
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getEmployees();
+      setEmployees(response.data || []);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load employee data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem("employees", JSON.stringify(employees));
-  }, [employees]);
+    fetchEmployees();
+  }, []);
 
-  // Add Employee
-  const handleAddEmployee = (newEmployee) => {
-    setEmployees((prevEmployees) => [...prevEmployees, newEmployee]);
+  // Add employee
+  const handleAddEmployee = async (newEmployee) => {
+    try {
+      await createEmployee(newEmployee);
+      fetchEmployees();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  // Delete Employee
-  const handleDelete = (id) => {
-    setEmployees((prevEmployees) =>
-      prevEmployees.filter((employee) => employee.id !== id)
-    );
+  // Delete employee
+  const handleDelete = async (id) => {
+    try {
+      await deleteEmployee(id);
+      fetchEmployees();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  // Edit Employee
+  // Status update
+  const handleStatusChange = async (id, newStatus) => {
+    const employee = employees.find((emp) => emp.id === id);
+
+    if (!employee) return;
+
+    try {
+      await updateEmployee(id, {
+        ...employee,
+        status: newStatus,
+      });
+
+      fetchEmployees();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Edit employee
   const handleEdit = (id) => {
-    alert(`Edit employee ID: ${id}`);
+    alert(`Edit employee ${id} implementation next`);
   };
 
-  // Change Status
-  const handleStatusChange = (id, newStatus) => {
-    setEmployees((prevEmployees) =>
-      prevEmployees.map((employee) =>
-        employee.id === id
-          ? { ...employee, status: newStatus }
-          : employee
-      )
-    );
-  };
-
-  // Dynamic departments
+  // Departments
   const departments = [
     ...new Set(employees.map((employee) => employee.department)),
   ];
 
-  // Search + Filter
+  // Search + filter
   const filteredEmployees = employees.filter((employee) => {
     const search = searchTerm.toLowerCase();
 
@@ -89,28 +104,56 @@ const Employees = () => {
     return matchesSearch && matchesDepartment;
   });
 
+  if (loading) {
+    return (
+      <div className="loading-state">
+        Loading employees...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error-state">
+        <p>{error}</p>
+        <button onClick={fetchEmployees}>Retry</button>
+      </div>
+    );
+  }
+
+  if (!employees.length) {
+    return (
+      <div className="empty-state">
+        No employees found
+      </div>
+    );
+  }
+
   return (
     <div className="employees-page">
       <div className="employees-header">
         <h1>Employees</h1>
         <p>
-          Manage your team members, search by name/role/email, and filter by
-          department.
+          Manage your team members, search by
+          name/role/email, and filter by department.
         </p>
       </div>
 
-      {/* Search Controls */}
       <div className="employees-controls">
         <input
           type="text"
           placeholder="Search employees..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) =>
+            setSearchTerm(e.target.value)
+          }
         />
 
         <select
           value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
+          onChange={(e) =>
+            setSelectedDepartment(e.target.value)
+          }
         >
           <option value="">All Departments</option>
 
@@ -121,12 +164,13 @@ const Employees = () => {
           ))}
         </select>
 
-        <button onClick={() => setShowModal(true)}>
+        <button
+          onClick={() => setShowModal(true)}
+        >
           + Add Employee
         </button>
       </div>
 
-      {/* Employee Table */}
       <EmployeeTable
         employees={filteredEmployees}
         onDelete={handleDelete}
@@ -134,7 +178,6 @@ const Employees = () => {
         onStatusChange={handleStatusChange}
       />
 
-      {/* Add Employee Popup */}
       <AddEmployeeModal
         show={showModal}
         onClose={() => setShowModal(false)}

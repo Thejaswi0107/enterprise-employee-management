@@ -1,7 +1,10 @@
 import { useState } from "react";
-import "./Employees.css";
 
-const AddEmployeeModal = ({ show, onClose, onAdd }) => {
+const AddEmployeeModal = ({
+  show,
+  onClose,
+  onAdd,
+}) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,7 +23,7 @@ const AddEmployeeModal = ({ show, onClose, onAdd }) => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (
       !formData.name ||
       !formData.email ||
@@ -32,12 +35,7 @@ const AddEmployeeModal = ({ show, onClose, onAdd }) => {
       return;
     }
 
-    const newEmployee = {
-      id: Date.now(),
-      ...formData,
-    };
-
-    onAdd(newEmployee);
+    await onAdd(formData);
 
     setFormData({
       name: "",
@@ -94,9 +92,9 @@ const AddEmployeeModal = ({ show, onClose, onAdd }) => {
             value={formData.status}
             onChange={handleChange}
           >
-            <option>Active</option>
-            <option>On Leave</option>
-            <option>Inactive</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="On Leave">On Leave</option>
           </select>
 
           <input
@@ -108,11 +106,17 @@ const AddEmployeeModal = ({ show, onClose, onAdd }) => {
         </div>
 
         <div className="modal-actions">
-          <button className="cancel-btn" onClick={onClose}>
+          <button
+            className="cancel-btn"
+            onClick={onClose}
+          >
             Cancel
           </button>
 
-          <button className="save-btn" onClick={handleSubmit}>
+          <button
+            className="save-btn"
+            onClick={handleSubmit}
+          >
             Add Employee
           </button>
         </div>

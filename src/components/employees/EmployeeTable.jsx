@@ -1,5 +1,3 @@
-import API from "../../services/api";
-
 const EmployeeTable = ({
   employees,
   onDelete,
@@ -33,17 +31,23 @@ const EmployeeTable = ({
               <td>
                 <div className="employee-info">
                   <div className="employee-avatar">
-                    {employee.name.charAt(0)}
+                    {employee.name.charAt(0).toUpperCase()}
                   </div>
 
                   <div>
-                    <div className="employee-name">{employee.name}</div>
-                    <div className="employee-email">{employee.email}</div>
+                    <div className="employee-name">
+                      {employee.name}
+                    </div>
+
+                    <div className="employee-email">
+                      {employee.email}
+                    </div>
                   </div>
                 </div>
               </td>
 
               <td>{employee.role}</td>
+
               <td>{employee.department}</td>
 
               <td>
@@ -53,7 +57,10 @@ const EmployeeTable = ({
                   )}`}
                   value={employee.status}
                   onChange={(e) =>
-                    onStatusChange(employee.id, e.target.value)
+                    onStatusChange(
+                      employee.id,
+                      e.target.value
+                    )
                   }
                 >
                   <option value="Active">Active</option>
@@ -68,14 +75,18 @@ const EmployeeTable = ({
                 <div className="action-buttons">
                   <button
                     className="edit-btn"
-                    onClick={() => onEdit(employee.id)}
+                    onClick={() =>
+                      onEdit(employee.id)
+                    }
                   >
                     Edit
                   </button>
 
                   <button
                     className="delete-btn"
-                    onClick={() => onDelete(employee.id)}
+                    onClick={() =>
+                      onDelete(employee.id)
+                    }
                   >
                     Delete
                   </button>
