@@ -1,0 +1,72 @@
+.attendance-page {
+  padding: 10px 30px;
+  background: #f4f7fb;
+  min-height: 100vh;
+}
+
+.attendance-header {
+  margin-bottom: 15px;
+}
+
+.attendance-header h1 {
+  font-size: 30px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.attendance-header p {
+  font-size: 16px;
+  color: #64748b;
+}
+
+.attendance-table-container {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.attendance-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 15px;
+  text-align: left;
+  padding: 18px;
+}
+
+.attendance-table td {
+  padding: 18px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.status-dropdown {
+  border: none;
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+.present {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.absent {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.leave {
+  background: #fef3c7;
+  color: #d97706;
+}

@@ -1,65 +1,75 @@
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
-  FaHome,
-  FaUsers,
-  FaBuilding,
-  FaCalendarCheck,
-  FaCog,
-  FaUserCircle,
-} from "react-icons/fa";
-import { NavLink } from "react-router-dom";
+  LayoutDashboard,
+  Users,
+  Building2,
+  CalendarCheck,
+  Settings,
+  LogOut,
+  UserCircle,
+} from "lucide-react";
+import "./Sidebar.css";
 
-function Sidebar() {
-  const menuClass = ({ isActive }) =>
-    `flex items-center gap-3 p-3 rounded-xl transition ${
-      isActive
-        ? "bg-blue-600 text-white"
-        : "text-gray-300 hover:bg-slate-800"
-    }`;
+const Sidebar = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
-    <div className="w-56 bg-[#0f172a] min-h-screen p-5 relative flex flex-col">
-      {/* Logo */}
-      <h1 className="text-white text-2xl font-bold mb-10">EEMS</h1>
+    <div className="sidebar">
+      <div>
+        <h2 className="logo">EEMS</h2>
 
-      {/* Navigation */}
-      <nav className="space-y-3 flex-1">
-        <NavLink to="/dashboard" end className={menuClass}>
-          <FaHome />
-          Dashboard
-        </NavLink>
+        <nav className="sidebar-nav">
+          <Link to="/dashboard" className="nav-link">
+            <LayoutDashboard size={20} />
+            Dashboard
+          </Link>
 
-        <NavLink to="/dashboard/employees" className={menuClass}>
-          <FaUsers />
-          Employees
-        </NavLink>
+          <Link to="/dashboard/employees" className="nav-link">
+            <Users size={20} />
+            Employees
+          </Link>
 
-        <NavLink to="/dashboard/departments" className={menuClass}>
-          <FaBuilding />
-          Departments
-        </NavLink>
+          <Link to="/dashboard/departments" className="nav-link">
+            <Building2 size={20} />
+            Departments
+          </Link>
 
-        <NavLink to="/dashboard/attendance" className={menuClass}>
-          <FaCalendarCheck />
-          Attendance
-        </NavLink>
+          <Link to="/dashboard/attendance" className="nav-link">
+            <CalendarCheck size={20} />
+            Attendance
+          </Link>
 
-        <NavLink to="/dashboard/settings" className={menuClass}>
-          <FaCog />
-          Settings
-        </NavLink>
-      </nav>
+          <Link to="/dashboard/settings" className="nav-link">
+            <Settings size={20} />
+            Settings
+          </Link>
+        </nav>
+      </div>
 
-      {/* Admin Profile */}
-      <div className="flex items-center gap-3 pt-6 border-t border-slate-700">
-        <FaUserCircle className="text-4xl text-gray-300" />
-
-        <div>
-          <p className="text-white font-medium">Admin User</p>
-          <p className="text-sm text-gray-400">Administrator</p>
+      <div className="sidebar-bottom">
+        <div className="admin-profile">
+          <UserCircle size={42} />
+          <div>
+            <h4>Admin User</h4>
+            <p>Administrator</p>
+          </div>
         </div>
+
+        <button onClick={handleLogout} className="logout-btn">
+          <LogOut size={18} />
+          Logout
+        </button>
       </div>
     </div>
   );
-}
+};
 
 export default Sidebar;

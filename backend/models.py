@@ -1,26 +1,14 @@
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from sqlalchemy import Column, Integer, String
+from app.database.db import Base
 
-db = SQLAlchemy()
 
-class Employee(db.Model):
+class Employee(Base):
     __tablename__ = "employees"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    role = db.Column(db.String(100), nullable=False)
-    department = db.Column(db.String(100), nullable=False)
-    status = db.Column(db.String(50), default="Active")
-    joined_date = db.Column(db.Date, default=datetime.utcnow)
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "email": self.email,
-            "role": self.role,
-            "department": self.department,
-            "status": self.status,
-            "joined_date": self.joined_date.strftime("%Y-%m-%d")
-        }
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, nullable=False)
+    role = Column(String, nullable=False)
+    department = Column(String, nullable=False)
+    status = Column(String, default="Active")
+    joined_date = Column(String, nullable=False)

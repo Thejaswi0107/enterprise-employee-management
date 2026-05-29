@@ -1,54 +1,136 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.database.db import get_db
-from app.schemas.employee_schema import EmployeeCreate, EmployeeResponse
-from app.controllers.employee_controller import (
-    get_all_employees,
-    get_employee_by_id,
-    create_employee,
-    update_employee,
-    delete_employee,
-)
+from models import Employee
+from pydantic import BaseModel
 
 router = APIRouter()
 
 
-@router.get("/employees", response_model=list[EmployeeResponse])
-def fetch_employees(db: Session = Depends(get_db)):
-    return get_all_employees(db)
+class EmployeeCreate(BaseModel):
+    name: str
+    email: str
+    role: str
+    department: str
+    status: str
+    joined_date: str
 
 
-@router.get("/employees/{employee_id}", response_model=EmployeeResponse)
-def fetch_employee(employee_id: int, db: Session = Depends(get_db)):
-    employee = get_employee_by_id(employee_id, db)
+@router.get("/employees")
+def get_employees(db: Session = Depends(get_db)):
+    employees = db.query(Employee).all()
+
+    return {
+        "success": True,
+        "data": employees
+    }
+
+
+@router.get("/employees/{employee_id}")
+def get_employee(employee_id: int, db: Session = Depends(get_db)):
+    employee = db.query(Employee).filter(
+        Employee.id == employee_id
+    ).first()
 
     if not employee:
-        raise HTTPException(status_code=404, detail="Employee not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Employee not found"
+        )
 
-    return employee
+    return {
+        "success": True,
+        "data": employee
+    }
 
 
-@router.post("/employees", response_model=EmployeeResponse)
-def add_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
-    return create_employee(employee, db)
+@router.post("/employees")
+def add_employee(
+    employee: EmployeeCreate,
+    db: Session = Depends(get_db)
+):
+    existing = db.query(Employee).filter(
+        Employee.email == employee.email
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail="Employee email already exists"
+        )
+
+    new_employee = Employee(
+        name=employee.name,
+        email=employee.email,
+        role=employee.role,
+        department=employee.department,
+        status=employee.status,
+        joined_date=employee.joined_date
+    )
+
+    db.add(new_employee)
+    db.commit()
+    db.refresh(new_employee)
+
+    return {
+        "success": True,
+        "message": "Employee added successfully",
+        "data": new_employee
+    }
 
 
-@router.put("/employees/{employee_id}", response_model=EmployeeResponse)
-def edit_employee(employee_id: int, employee: EmployeeCreate, db: Session = Depends(get_db)):
-    updated = update_employee(employee_id, employee, db)
+@router.put("/employees/{employee_id}")
+def update_employee(
+    employee_id: int,
+    employee: EmployeeCreate,
+    db: Session = Depends(get_db)
+):
+    existing = db.query(Employee).filter(
+        Employee.id == employee_id
+    ).first()
 
-    if not updated:
-        raise HTTPException(status_code=404, detail="Employee not found")
+    if not existing:
+        raise HTTPException(
+            status_code=404,
+            detail="Employee not found"
+        )
 
-    return updated
+    existing.name = employee.name
+    existing.email = employee.email
+    existing.role = employee.role
+    existing.department = employee.department
+    existing.status = employee.status
+    existing.joined_date = employee.joined_date
+
+    db.commit()
+    db.refresh(existing)
+
+    return {
+        "success": True,
+        "message": "Employee updated successfully",
+        "data": existing
+    }
 
 
 @router.delete("/employees/{employee_id}")
-def remove_employee(employee_id: int, db: Session = Depends(get_db)):
-    deleted = delete_employee(employee_id, db)
+def delete_employee(
+    employee_id: int,
+    db: Session = Depends(get_db)
+):
+    employee = db.query(Employee).filter(
+        Employee.id == employee_id
+    ).first()
 
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Employee not found")
+    if not employee:
+        raise HTTPException(
+            status_code=404,
+            detail="Employee not found"
+        )
 
-    return {"message": "Employee deleted successfully"}
+    db.delete(employee)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": "Employee deleted successfully"
+    }

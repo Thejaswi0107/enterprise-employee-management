@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AddEmployeeModal = ({
   show,
   onClose,
-  onAdd,
+  onSubmit,
+  employee,
 }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -14,6 +15,29 @@ const AddEmployeeModal = ({
     joined_date: "",
   });
 
+  useEffect(() => {
+    if (employee) {
+      setFormData({
+        name: employee.name || "",
+        email: employee.email || "",
+        role: employee.role || "",
+        department: employee.department || "",
+        status: employee.status || "Active",
+        joined_date:
+          employee.joined_date || "",
+      });
+    } else {
+      setFormData({
+        name: "",
+        email: "",
+        role: "",
+        department: "",
+        status: "Active",
+        joined_date: "",
+      });
+    }
+  }, [employee]);
+
   if (!show) return null;
 
   const handleChange = (e) => {
@@ -23,7 +47,7 @@ const AddEmployeeModal = ({
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (
       !formData.name ||
       !formData.email ||
@@ -35,24 +59,17 @@ const AddEmployeeModal = ({
       return;
     }
 
-    await onAdd(formData);
-
-    setFormData({
-      name: "",
-      email: "",
-      role: "",
-      department: "",
-      status: "Active",
-      joined_date: "",
-    });
-
-    onClose();
+    onSubmit(formData);
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-box">
-        <h2>Add Employee</h2>
+        <h2>
+          {employee
+            ? "Edit Employee"
+            : "Add Employee"}
+        </h2>
 
         <div className="modal-grid">
           <input
@@ -92,9 +109,17 @@ const AddEmployeeModal = ({
             value={formData.status}
             onChange={handleChange}
           >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="On Leave">On Leave</option>
+            <option value="Active">
+              Active
+            </option>
+
+            <option value="Inactive">
+              Inactive
+            </option>
+
+            <option value="On Leave">
+              On Leave
+            </option>
           </select>
 
           <input
@@ -117,7 +142,9 @@ const AddEmployeeModal = ({
             className="save-btn"
             onClick={handleSubmit}
           >
-            Add Employee
+            {employee
+              ? "Update Employee"
+              : "Add Employee"}
           </button>
         </div>
       </div>

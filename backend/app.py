@@ -14,22 +14,15 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# GET ALL EMPLOYEES
-
 @app.route("/api/employees", methods=["GET"])
 def get_employees():
     employees = Employee.query.all()
     return jsonify([employee.to_dict() for employee in employees])
 
-
-# GET SINGLE EMPLOYEE
-
 @app.route("/api/employees/<int:id>", methods=["GET"])
 def get_employee(id):
     employee = Employee.query.get_or_404(id)
     return jsonify(employee.to_dict())
-
-# ADD EMPLOYEE
 
 @app.route("/api/employees", methods=["POST"])
 def add_employee():
@@ -52,8 +45,6 @@ def add_employee():
     }), 201
 
 
-# UPDATE EMPLOYEE
-
 @app.route("/api/employees/<int:id>", methods=["PUT"])
 def update_employee(id):
     employee = Employee.query.get_or_404(id)
@@ -71,7 +62,6 @@ def update_employee(id):
         "message": "Employee updated successfully"
     })
 
-# DELETE EMPLOYEE
 
 @app.route("/api/employees/<int:id>", methods=["DELETE"])
 def delete_employee(id):
@@ -84,7 +74,6 @@ def delete_employee(id):
         "message": "Employee deleted successfully"
     })
 
-# UPDATE STATUS
 
 @app.route("/api/employees/<int:id>/status", methods=["PATCH"])
 def update_status(id):
@@ -98,16 +87,12 @@ def update_status(id):
         "message": "Status updated successfully"
     })
 
-# DEPARTMENTS
-
 @app.route("/api/departments", methods=["GET"])
 def get_departments():
     departments = db.session.query(Employee.department).distinct().all()
     dept_list = [dept[0] for dept in departments]
 
     return jsonify(dept_list)
-
-# DASHBOARD STATS
 
 @app.route("/api/dashboard/stats", methods=["GET"])
 def dashboard_stats():

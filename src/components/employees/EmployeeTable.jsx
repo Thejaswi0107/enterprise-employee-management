@@ -1,16 +1,11 @@
+import React from "react";
+
 const EmployeeTable = ({
   employees,
-  onDelete,
   onEdit,
+  onDelete,
   onStatusChange,
 }) => {
-  const getStatusClass = (status) => {
-    if (status === "Active") return "status-active";
-    if (status === "Inactive") return "status-inactive";
-    if (status === "On Leave") return "status-leave";
-    return "";
-  };
-
   return (
     <div className="employee-table-container">
       <table className="employee-table">
@@ -20,7 +15,7 @@ const EmployeeTable = ({
             <th>Role</th>
             <th>Department</th>
             <th>Status</th>
-            <th>Joined</th>
+            <th>Joined Date</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -28,10 +23,11 @@ const EmployeeTable = ({
         <tbody>
           {employees.map((employee) => (
             <tr key={employee.id}>
+              {/* Employee */}
               <td>
                 <div className="employee-info">
                   <div className="employee-avatar">
-                    {employee.name.charAt(0).toUpperCase()}
+                    {employee.name?.charAt(0)}
                   </div>
 
                   <div>
@@ -46,15 +42,15 @@ const EmployeeTable = ({
                 </div>
               </td>
 
+              {/* Role */}
               <td>{employee.role}</td>
 
+              {/* Department */}
               <td>{employee.department}</td>
 
+              {/* Status */}
               <td>
                 <select
-                  className={`status-select ${getStatusClass(
-                    employee.status
-                  )}`}
                   value={employee.status}
                   onChange={(e) =>
                     onStatusChange(
@@ -62,21 +58,41 @@ const EmployeeTable = ({
                       e.target.value
                     )
                   }
+                  className={`status-select ${
+                    employee.status === "Active"
+                      ? "status-active"
+                      : employee.status ===
+                        "Inactive"
+                      ? "status-inactive"
+                      : "status-leave"
+                  }`}
                 >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                  <option value="On Leave">On Leave</option>
+                  <option value="Active">
+                    Active
+                  </option>
+
+                  <option value="Inactive">
+                    Inactive
+                  </option>
+
+                  <option value="On Leave">
+                    On Leave
+                  </option>
                 </select>
               </td>
 
-              <td>{employee.joined_date}</td>
+              {/* Joined Date */}
+              <td>
+                {employee.joined_date}
+              </td>
 
+              {/* Actions */}
               <td>
                 <div className="action-buttons">
                   <button
                     className="edit-btn"
                     onClick={() =>
-                      onEdit(employee.id)
+                      onEdit(employee)
                     }
                   >
                     Edit

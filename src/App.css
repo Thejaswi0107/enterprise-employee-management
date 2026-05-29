@@ -182,3 +182,60 @@
     border-right-color: var(--border);
   }
 }
+
+/* DARK MODE */
+
+body.dark-mode {
+  background: #111827;
+  color: #f9fafb;
+}
+
+body.dark-mode .sidebar {
+  background: #0f172a;
+}
+
+body.dark-mode .dashboard-content,
+body.dark-mode .employees-page,
+body.dark-mode .departments-page,
+body.dark-mode .attendance-page,
+body.dark-mode .settings-page {
+  background: #111827;
+}
+
+body.dark-mode .settings-card,
+body.dark-mode .employee-table-container,
+body.dark-mode .department-card,
+body.dark-mode .attendance-card,
+body.dark-mode .stats-card {
+  background: #1f2937;
+  color: white;
+  border-color: #374151;
+}
+
+body.dark-mode input,
+body.dark-mode select {
+  background: #374151;
+  color: white;
+  border: 1px solid #4b5563;
+}
+
+body.dark-mode table {
+  color: white;
+}
+
+body.dark-mode th {
+  background: #111827;
+}
+
+body.dark-mode td {
+  border-color: #374151;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode p,
+body.dark-mode span {
+  color: #f9fafb;
+}

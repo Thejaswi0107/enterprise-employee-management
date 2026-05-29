@@ -1,104 +1,90 @@
-import { FaUsers } from "react-icons/fa";
+import React, { useState } from "react";
+import { loginUser } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import "./Login.css";
 
-function Login() {
+const Login = () => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [error, setError] = useState("");
+
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  const handleLogin = () => {
-    // Validation
-    if (!email || !password) {
-      alert("Please enter email and password");
-      return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setError("");
+
+    try {
+      const response = await loginUser(formData);
+
+      if (response.success) {
+        login(response.user);
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setError("Invalid email or password");
     }
-
-    // Navigate to dashboard
-    navigate("/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f7fb] px-4">
-      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
-        
-        {/* Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-blue-100 p-4 rounded-full">
-            <FaUsers className="text-blue-600 text-2xl" />
-          </div>
-        </div>
+    <div className="login-page">
+      <div className="login-card">
+        <h1>Enterprise Employee Management</h1>
+        <p>Login to continue</p>
 
-        {/* Heading */}
-        <h1 className="text-3xl font-bold text-center text-gray-800">
-          Welcome Back!
-        </h1>
+        {error && <p className="login-error">{error}</p>}
 
-        <p className="text-center text-gray-500 mt-2 mb-8">
-          Login to your account
-        </p>
-
-        {/* Email */}
-        <div className="mb-4">
-          <label className="block text-sm text-gray-600 mb-2">
-            Email
-          </label>
-
+        <form onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            name="email"
+            placeholder="Enter email"
+            value={formData.email}
+            onChange={handleChange}
           />
-        </div>
-
-        {/* Password */}
-        <div className="mb-4">
-          <label className="block text-sm text-gray-600 mb-2">
-            Password
-          </label>
 
           <input
             type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            name="password"
+            placeholder="Enter password"
+            value={formData.password}
+            onChange={handleChange}
           />
-        </div>
 
-        {/* Remember Me */}
-        <div className="flex justify-between items-center mb-6 text-sm">
-          <label className="flex items-center gap-2 text-gray-500">
-            <input type="checkbox" />
-            Remember me
-          </label>
+          <button type="submit">Login</button>
+        </form>
 
-          <a href="#" className="text-blue-600 hover:underline">
-            Forgot password?
-          </a>
-        </div>
+         <div className="auth-links">
 
-        {/* Login Button */}
-        <button
-          onClick={handleLogin}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition"
-        >
-          Login
-        </button>
+            <a href="/forgot-password" className="forgot-link">
+                 Forgot Password?
+            </a>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          Don’t have an account?
-          <span className="text-blue-600 ml-1 cursor-pointer">
-            Contact Admin
-          </span>
-        </p>
+            <button
+                 type="button"
+                 className="signup-btn"
+                 onClick={() => navigate("/signup")}
+            >
+                 Sign Up
+            </button>
+
+         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Login;
