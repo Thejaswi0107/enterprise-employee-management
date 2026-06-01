@@ -65,10 +65,20 @@ const AddEmployeeModal = ({
     }
     if (!formData.role.trim()) newErrors.role = "Role is required.";
     if (!formData.department.trim()) newErrors.department = "Department is required.";
-    if (!formData.joined_date) newErrors.joined_date = "Joined date is required.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Check if all mandatory fields are filled
+  const isMandatoryFieldsFilled = () => {
+    return (
+      formData.name.trim() &&
+      formData.email.trim() &&
+      formData.role.trim() &&
+      formData.department.trim() &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    );
   };
 
   const handleSubmit = () => {
@@ -169,7 +179,7 @@ const AddEmployeeModal = ({
           </FormField>
 
           <FormField
-            label="Joined Date"
+            label="Joined Date (Optional)"
             name="joined_date"
             type="date"
             value={formData.joined_date}
@@ -189,6 +199,7 @@ const AddEmployeeModal = ({
           <button
             className="save-btn"
             onClick={handleSubmit}
+            disabled={!isMandatoryFieldsFilled()}
           >
             {employee
               ? "Update Employee"
