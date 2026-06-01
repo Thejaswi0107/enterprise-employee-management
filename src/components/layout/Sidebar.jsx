@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   LayoutDashboard,
@@ -9,10 +9,11 @@ import {
   Settings,
   LogOut,
   UserCircle,
+  X,
 } from "lucide-react";
 import "./Sidebar.css";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
@@ -21,50 +22,80 @@ const Sidebar = () => {
     navigate("/login");
   };
 
+  const isAdmin = user?.role === "admin";
+
   return (
-    <div className="sidebar">
-      <div>
-        <h2 className="logo">EEMS</h2>
+    <div className={`sidebar ${isOpen ? "mobile-open" : ""}`}>
+      <div className="sidebar-panel">
+        <div className="sidebar-header">
+          <h2 className="logo">EEMS</h2>
+          <button className="sidebar-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
 
         <nav className="sidebar-nav">
-          <Link to="/dashboard" className="nav-link">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
             <LayoutDashboard size={20} />
             Dashboard
-          </Link>
+          </NavLink>
 
-          <Link to="/dashboard/employees" className="nav-link">
+          <NavLink
+            to="/dashboard/employees"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
             <Users size={20} />
             Employees
-          </Link>
+          </NavLink>
 
-          <Link to="/dashboard/departments" className="nav-link">
-            <Building2 size={20} />
-            Departments
-          </Link>
+          {isAdmin && (
+            <NavLink
+              to="/dashboard/departments"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <Building2 size={20} />
+              Departments
+            </NavLink>
+          )}
 
-          <Link to="/dashboard/attendance" className="nav-link">
-            <CalendarCheck size={20} />
-            Attendance
-          </Link>
+          {isAdmin && (
+            <NavLink
+              to="/dashboard/attendance"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <CalendarCheck size={20} />
+              Attendance
+            </NavLink>
+          )}
 
-          <Link to="/dashboard/settings" className="nav-link">
-            <Settings size={20} />
-            Settings
-          </Link>
+          {isAdmin && (
+            <NavLink
+              to="/dashboard/settings"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <Settings size={20} />
+              Settings
+            </NavLink>
+          )}
         </nav>
       </div>
 
       <div className="sidebar-bottom">
-        <div className="admin-profile">
-          <UserCircle size={42} />
-          <div>
-            <h4>Admin User</h4>
-            <p>Administrator</p>
-          </div>
-        </div>
-
-        <button onClick={handleLogout} className="logout-btn">
-          <LogOut size={18} />
+        <button onClick={handleLogout} className="logout-btn compact-logout">
+          <LogOut size={16} />
           Logout
         </button>
       </div>

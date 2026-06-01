@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import "../../components/styles/Attendance.css";
 
 const Attendance = () => {
+  const { user } = useAuth();
   const [attendance, setAttendance] = useState([
     {
       id: 1,
@@ -43,16 +45,52 @@ const Attendance = () => {
     setAttendance(updatedAttendance);
   };
 
+  const downloadCsv = () => {
+    const headers = ["Employee Name", "Department", "Status", "Date"];
+    const rows = attendance.map((employee) => [
+      employee.name,
+      employee.department,
+      employee.status,
+      employee.date,
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((item) => `"${item}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "attendance-report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const canDownload = user?.role === "admin";
+
   return (
     <div className="attendance-page">
       {/* Header */}
       <div className="attendance-header">
-        <h1>Attendance</h1>
+        <div>
+          <h1>Attendance</h1>
+          <p>
+            Manage employee attendance and
+            daily status tracking.
+          </p>
+        </div>
 
-        <p>
-          Manage employee attendance and
-          daily status tracking.
-        </p>
+        {canDownload && (
+          <button
+            className="download-btn"
+            onClick={downloadCsv}
+          >
+            Download Report
+          </button>
+        )}
       </div>
 
       {/* Attendance Table */}

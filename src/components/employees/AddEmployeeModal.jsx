@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import FormField from "../common/FormField";
 
 const AddEmployeeModal = ({
   show,
   onClose,
   onSubmit,
   employee,
+  departments = [],
 }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -14,6 +16,7 @@ const AddEmployeeModal = ({
     status: "Active",
     joined_date: "",
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (employee) {
@@ -23,8 +26,7 @@ const AddEmployeeModal = ({
         role: employee.role || "",
         department: employee.department || "",
         status: employee.status || "Active",
-        joined_date:
-          employee.joined_date || "",
+        joined_date: employee.joined_date || "",
       });
     } else {
       setFormData({
@@ -36,7 +38,8 @@ const AddEmployeeModal = ({
         joined_date: "",
       });
     }
-  }, [employee]);
+    setErrors({});
+  }, [employee, show]);
 
   if (!show) return null;
 
@@ -45,17 +48,31 @@ const AddEmployeeModal = ({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setErrors({
+      ...errors,
+      [e.target.name]: null,
+    });
+  };
+
+  const validate = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) newErrors.name = "Name is required.";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address.";
+    }
+    if (!formData.role.trim()) newErrors.role = "Role is required.";
+    if (!formData.department.trim()) newErrors.department = "Department is required.";
+    if (!formData.joined_date) newErrors.joined_date = "Joined date is required.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.role ||
-      !formData.department ||
-      !formData.joined_date
-    ) {
-      alert("Please fill all fields");
+    if (!validate()) {
       return;
     }
 
@@ -72,61 +89,92 @@ const AddEmployeeModal = ({
         </h2>
 
         <div className="modal-grid">
-          <input
-            type="text"
+          <FormField
+            label="Name"
             name="name"
-            placeholder="Employee Name"
             value={formData.name}
+            placeholder="Employee Name"
             onChange={handleChange}
+            error={errors.name}
           />
 
-          <input
-            type="email"
+          <FormField
+            label="Email"
             name="email"
-            placeholder="Employee Email"
+            type="email"
             value={formData.email}
+            placeholder="Employee Email"
             onChange={handleChange}
+            error={errors.email}
           />
 
-          <input
-            type="text"
+          <FormField
+            label="Role"
             name="role"
-            placeholder="Role"
             value={formData.role}
+            placeholder="Role"
             onChange={handleChange}
+            error={errors.role}
           />
 
-          <input
-            type="text"
+          <FormField
+            label="Department"
             name="department"
-            placeholder="Department"
             value={formData.department}
             onChange={handleChange}
-          />
+            error={errors.department}
+          >
+            {departments.length > 0 ? (
+              <select
+                id="department"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+              >
+                <option value="">Select Department</option>
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                id="department"
+                name="department"
+                type="text"
+                value={formData.department}
+                placeholder="Department"
+                onChange={handleChange}
+              />
+            )}
+          </FormField>
 
-          <select
+          <FormField
+            label="Status"
             name="status"
             value={formData.status}
             onChange={handleChange}
           >
-            <option value="Active">
-              Active
-            </option>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </FormField>
 
-            <option value="Inactive">
-              Inactive
-            </option>
-
-            <option value="On Leave">
-              On Leave
-            </option>
-          </select>
-
-          <input
-            type="date"
+          <FormField
+            label="Joined Date"
             name="joined_date"
+            type="date"
             value={formData.joined_date}
             onChange={handleChange}
+            error={errors.joined_date}
           />
         </div>
 

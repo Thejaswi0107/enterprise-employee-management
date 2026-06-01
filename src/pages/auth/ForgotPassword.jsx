@@ -2,65 +2,79 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Auth.css";
 
-function Signup() {
+function ForgotPassword() {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user",
   });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError("");
+    setMessage("");
   };
 
-  const handleSignup = (e) => {
+  const handleReset = (e) => {
     e.preventDefault();
 
+    if (!formData.email.trim()) {
+      setError("Email is required.");
+      return;
+    }
+
+    if (!formData.password || !formData.confirmPassword) {
+      setError("Both password fields are required.");
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
     const registeredUsers =
       JSON.parse(localStorage.getItem("registeredUsers")) || [];
 
-    const existingUser = registeredUsers.find(
+    const userIndex = registeredUsers.findIndex(
       (user) => user.email === formData.email
     );
 
-    if (existingUser) {
-      alert("An account with this email already exists.");
+    if (userIndex === -1) {
+      setError("No registered user found with this email.");
       return;
     }
 
-    const userData = {
-      email: formData.email,
+    registeredUsers[userIndex] = {
+      ...registeredUsers[userIndex],
       password: formData.password,
-      role: formData.role,
     };
 
     localStorage.setItem(
       "registeredUsers",
-      JSON.stringify([...registeredUsers, userData])
+      JSON.stringify(registeredUsers)
     );
 
-    alert("Account Created Successfully!");
-    navigate("/login");
+    setMessage("Password updated successfully. Please login.");
+    setFormData({ email: formData.email, password: "", confirmPassword: "" });
   };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>Sign Up</h1>
-        <p>Create your account</p>
+        <h1>Forgot Password</h1>
+        <p>Reset your password using the email associated with your account.</p>
 
-        <form onSubmit={handleSignup}>
+        {error && <p className="login-error">{error}</p>}
+        {message && <p className="success-message">{message}</p>}
+
+        <form onSubmit={handleReset}>
           <input
             type="email"
             name="email"
@@ -73,7 +87,7 @@ function Signup() {
           <input
             type="password"
             name="password"
-            placeholder="Enter Password"
+            placeholder="New Password"
             value={formData.password}
             onChange={handleChange}
             required
@@ -82,36 +96,22 @@ function Signup() {
           <input
             type="password"
             name="confirmPassword"
-            placeholder="Confirm Password"
+            placeholder="Confirm New Password"
             value={formData.confirmPassword}
             onChange={handleChange}
             required
           />
 
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            required
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-
-          <button type="submit">
-            Sign Up
-          </button>
+          <button type="submit">Reset Password</button>
         </form>
 
         <p className="auth-footer">
-          Already have an account?
-          <span onClick={() => navigate("/login")}>
-            Login
-          </span>
+          Remembered your password?
+          <span onClick={() => navigate("/login")}>Login</span>
         </p>
       </div>
     </div>
   );
 }
 
-export default Signup;
+export default ForgotPassword;

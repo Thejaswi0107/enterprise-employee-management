@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 
 import {
   getEmployees,
@@ -9,6 +9,9 @@ import {
 
 import EmployeeTable from "../../components/employees/EmployeeTable";
 import AddEmployeeModal from "../../components/employees/AddEmployeeModal";
+import EmployeeStatCard from "../../components/employees/EmployeeStatCard";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
+import Toast from "../../components/common/Toast";
 
 import "../../components/employees/Employees.css";
 
@@ -16,55 +19,57 @@ const Employees = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
-
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [deleteEmployeeId, setDeleteEmployeeId] = useState(null);
+  const [departments, setDepartments] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] =
     useState("All Departments");
+  const [sortKey, setSortKey] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const employeesPerPage = 10;
 
-  // Fetch Employees
+  useEffect(() => {
+    if (!toast) return;
+
+    const toastTimer = setTimeout(() => {
+      setToast(null);
+    }, 3500);
+
+    return () => clearTimeout(toastTimer);
+  }, [toast]);
+
   const fetchEmployees = async () => {
     try {
       setLoading(true);
       setError("");
 
       const response = await getEmployees();
+      const backendEmployees = response?.data || [];
 
-      const backendEmployees =
-        response?.data?.data || [];
+      if (!response?.success) {
+        throw new Error(response?.message || "Could not load employees");
+      }
 
-      // Extra demo employees
-      const extraResponse = await fetch(
-        "https://jsonplaceholder.typicode.com/users"
+      setEmployees(backendEmployees);
+      setDepartments(
+        Array.from(
+          new Set(backendEmployees.map((employee) => employee.department))
+        ).filter(Boolean)
       );
-
-      const extraUsers = await extraResponse.json();
-
-      const extraEmployees = extraUsers.map((user) => ({
-        id: `api-${user.id}`,
-        name: user.name,
-        email: user.email,
-        role: user.company.bs,
-        department: user.company.name,
-        status: "Active",
-        joined_date: "2024-01-01",
-      }));
-
-      setEmployees([
-        ...backendEmployees,
-        ...extraEmployees,
-      ]);
     } catch (err) {
       console.error(err);
-      setError("Failed to load employees");
+      const message =
+        err?.response?.data?.detail || err?.message || "Failed to load employees";
+      setError(message);
+      setToast({ type: "error", message });
     } finally {
       setLoading(false);
     }
@@ -74,58 +79,174 @@ const Employees = () => {
     fetchEmployees();
   }, []);
 
-  // Add Employee
+  const filteredEmployees = useMemo(
+    () =>
+      employees.filter((employee) => {
+        const lowerSearch = searchTerm.toLowerCase();
+        const matchesSearch =
+          employee.name
+            ?.toLowerCase()
+            .includes(lowerSearch) ||
+          employee.email
+            ?.toLowerCase()
+            .includes(lowerSearch) ||
+          employee.role
+            ?.toLowerCase()
+            .includes(lowerSearch);
+
+        const matchesDepartment =
+          departmentFilter === "All Departments" ||
+          employee.department === departmentFilter;
+
+        return matchesSearch && matchesDepartment;
+      }),
+    [employees, departmentFilter, searchTerm]
+  );
+
+  const sortValue = (item) => {
+    if (sortKey === "joined_date") {
+      return new Date(item.joined_date).getTime() || 0;
+    }
+
+    return String(item[sortKey] || "").toLowerCase();
+  };
+
+  const sortedEmployees = useMemo(() => {
+    return [...filteredEmployees].sort((a, b) => {
+      const first = sortValue(a);
+      const second = sortValue(b);
+
+      if (first < second) return sortOrder === "asc" ? -1 : 1;
+      if (first > second) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [filteredEmployees, sortKey, sortOrder]);
+
+  useEffect(() => {
+    if (!selectedEmployee && sortedEmployees.length) {
+      setSelectedEmployee(sortedEmployees[0]);
+    }
+
+    if (
+      selectedEmployee &&
+      !sortedEmployees.some(
+        (item) => item.id === selectedEmployee.id
+      )
+    ) {
+      setSelectedEmployee(sortedEmployees[0] || null);
+    }
+  }, [sortedEmployees, selectedEmployee]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedEmployees.length / employeesPerPage)
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const indexOfLastEmployee = currentPage * employeesPerPage;
+  const indexOfFirstEmployee = indexOfLastEmployee - employeesPerPage;
+
+  const currentEmployees = sortedEmployees.slice(
+    indexOfFirstEmployee,
+    indexOfLastEmployee
+  );
+
+  const stats = [
+    {
+      title: "Total Employees",
+      value: employees.length,
+      detail: "All active records",
+    },
+    {
+      title: "Active",
+      value: employees.filter((emp) => emp.status === "Active").length,
+      detail: "Currently working",
+    },
+    {
+      title: "On Leave",
+      value: employees.filter((emp) => emp.status === "On Leave").length,
+      detail: "Out of office",
+    },
+    {
+      title: "Departments",
+      value: new Set(
+        employees.map((emp) => emp.department)
+      ).size,
+      detail: "Team groups",
+    },
+  ];
+
   const handleAddEmployee = async (employeeData) => {
     try {
       const response = await addEmployee(employeeData);
 
-      if (response?.data?.data) {
-        setEmployees((prev) => [
-          response.data.data,
-          ...prev,
-        ]);
+      if (response?.success && response?.data) {
+        setEmployees((prev) => [response.data, ...prev]);
+        setDepartments((prev) =>
+          Array.from(new Set([response.data.department, ...prev])).filter(
+            Boolean
+          )
+        );
+        setToast({
+          type: "success",
+          message: "Employee added successfully",
+        });
       }
 
       setShowModal(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to add employee");
+      const message =
+        err?.response?.data?.detail || err?.message || "Failed to add employee";
+      setToast({ type: "error", message });
     }
   };
 
-  // Edit Employee
   const handleEditEmployee = async (employeeData) => {
     try {
-      await updateEmployee(
-        editingEmployee.id,
-        employeeData
-      );
-
-      fetchEmployees();
-
+      const response = await updateEmployee(editingEmployee.id, employeeData);
+      if (response?.success) {
+        await fetchEmployees();
+        setToast({
+          type: "success",
+          message: "Employee updated successfully",
+        });
+      }
       setEditingEmployee(null);
       setShowModal(false);
     } catch (err) {
       console.error(err);
-      alert("Failed to update employee");
+      const message =
+        err?.response?.data?.detail || err?.message || "Failed to update employee";
+      setToast({ type: "error", message });
     }
   };
 
-  // Delete Employee
   const handleDeleteEmployee = (id) => {
     setDeleteEmployeeId(id);
   };
 
   const confirmDeleteEmployee = async () => {
     try {
-      await deleteEmployee(deleteEmployeeId);
-
-      fetchEmployees();
-
+      const response = await deleteEmployee(deleteEmployeeId);
+      if (response?.success) {
+        await fetchEmployees();
+        setToast({
+          type: "success",
+          message: "Employee deleted successfully",
+        });
+      }
       setDeleteEmployeeId(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to delete employee");
+      const message =
+        err?.response?.data?.detail || err?.message || "Failed to delete employee";
+      setToast({ type: "error", message });
     }
   };
 
@@ -133,93 +254,60 @@ const Employees = () => {
     setDeleteEmployeeId(null);
   };
 
-  // Status Change
-  const handleStatusChange = async (
-    id,
-    newStatus
-  ) => {
-    const employee = employees.find(
-      (emp) => emp.id === id
-    );
+  const handleStatusChange = async (id, newStatus) => {
+    const employee = employees.find((emp) => emp.id === id);
 
     if (!employee) return;
 
-    // Skip fake API employees
-    if (String(id).startsWith("api-")) return;
-
     try {
-      await updateEmployee(id, {
+      const response = await updateEmployee(id, {
         ...employee,
         status: newStatus,
       });
 
-      fetchEmployees();
+      if (response?.success) {
+        setEmployees((prev) =>
+          prev.map((emp) =>
+            emp.id === id ? { ...emp, status: newStatus } : emp
+          )
+        );
+        setToast({
+          type: "success",
+          message: "Employee status updated",
+        });
+      }
     } catch (err) {
       console.error(err);
-      alert("Failed to update status");
+      const message =
+        err?.response?.data?.detail || err?.message || "Failed to update status";
+      setToast({ type: "error", message });
     }
   };
 
-  // Search + Filter
-  const filteredEmployees = employees.filter(
-    (employee) => {
-      const matchesSearch =
-        employee.name
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        employee.email
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        employee.role
-          ?.toLowerCase()
-          .includes(searchTerm.toLowerCase());
+  const selectedDepartmentCount = selectedEmployee
+    ? employees.filter(
+        (emp) => emp.department === selectedEmployee.department
+      ).length
+    : 0;
 
-      const matchesDepartment =
-        departmentFilter ===
-          "All Departments" ||
-        employee.department ===
-          departmentFilter;
-
-      return (
-        matchesSearch && matchesDepartment
-      );
-    }
-  );
-
-  // Pagination Logic
-  const indexOfLastEmployee =
-    currentPage * employeesPerPage;
-
-  const indexOfFirstEmployee =
-    indexOfLastEmployee - employeesPerPage;
-
-  const currentEmployees =
-    filteredEmployees.slice(
-      indexOfFirstEmployee,
-      indexOfLastEmployee
-    );
-
-  const totalPages = Math.ceil(
-    filteredEmployees.length /
-      employeesPerPage
-  );
-
-  // Loading
   if (loading) {
     return (
       <div className="loading-state">
-        Loading employees...
+        <div className="loading-title">Loading employees</div>
+        <div className="loading-lines">
+          {[...Array(6)].map((_, index) => (
+            <div key={index} className="loading-line" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  // Error
   if (error) {
     return (
       <div className="error-state">
         <p>{error}</p>
-
-        <button onClick={fetchEmployees}>
+        <button className="primary-btn" onClick={fetchEmployees}>
           Retry
         </button>
       </div>
@@ -228,28 +316,33 @@ const Employees = () => {
 
   return (
     <div className="employees-page">
-      {/* Header */}
+      <Toast message={toast?.message} type={toast?.type} />
       <div className="employees-header">
         <h1>Employees</h1>
-
         <p>
-          Manage your team members,
-          search by name/role/email,
-          and filter by department.
+          Manage your team, review employee details, and monitor department
+          activity from a single dashboard.
         </p>
       </div>
 
-      {/* Controls */}
+      <div className="stats-row">
+        {stats.map((item) => (
+          <EmployeeStatCard
+            key={item.title}
+            title={item.title}
+            value={item.value}
+            detail={item.detail}
+          />
+        ))}
+      </div>
+
       <div className="employees-controls">
         <input
           type="text"
           placeholder="Search employees..."
           value={searchTerm}
           onChange={(e) => {
-            setSearchTerm(
-              e.target.value
-            );
-
+            setSearchTerm(e.target.value);
             setCurrentPage(1);
           }}
         />
@@ -257,27 +350,44 @@ const Employees = () => {
         <select
           value={departmentFilter}
           onChange={(e) => {
-            setDepartmentFilter(
-              e.target.value
-            );
-
+            setDepartmentFilter(e.target.value);
             setCurrentPage(1);
           }}
-         >
-          <option>
-            All Departments
-          </option>
-
-          {[
-            ...new Set(employees.map(
-              (employee) => employee.department
-            )),
-          ].map((department,index) => (<option key={department} value={department}>{department}</option>))
-          }
-
+        >
+          <option value="All Departments">All Departments</option>
+          {[...new Set(employees.map((employee) => employee.department))].map(
+            (department) => (
+              <option key={department} value={department}>
+                {department}
+              </option>
+            )
+          )}
         </select>
 
+        <div className="sort-group">
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value)}
+          >
+            <option value="name">Sort by Name</option>
+            <option value="department">Sort by Department</option>
+            <option value="status">Sort by Status</option>
+            <option value="joined_date">Sort by Join Date</option>
+          </select>
+          <button
+            className="sort-order-btn"
+            onClick={() =>
+              setSortOrder((current) =>
+                current === "asc" ? "desc" : "asc"
+              )
+            }
+          >
+            {sortOrder === "asc" ? "A → Z" : "Z → A"}
+          </button>
+        </div>
+
         <button
+          className="primary-btn"
           onClick={() => {
             setEditingEmployee(null);
             setShowModal(true);
@@ -287,140 +397,82 @@ const Employees = () => {
         </button>
       </div>
 
-      {/* Empty */}
-      {filteredEmployees.length === 0 ? (
-        <div className="empty-state">
-          No employees found
-        </div>
-      ) : (
-        <>
-          {/* Table */}
-          <EmployeeTable
-            employees={currentEmployees}
-            onEdit={(employee) => {
-              setEditingEmployee(
-                employee
-              );
+      <div className="dashboard-main">
+        <div className="dashboard-left">
+          {currentEmployees.length > 0 ? (
+            <EmployeeTable
+              employees={currentEmployees}
+              onEdit={(employee) => {
+                setEditingEmployee(employee);
+                setShowModal(true);
+              }}
+              onDelete={handleDeleteEmployee}
+              onStatusChange={handleStatusChange}
+              onSelect={setSelectedEmployee}
+              selectedEmployeeId={selectedEmployee?.id}
+            />
+          ) : (
+            <div className="empty-state">
+              <h3>No employees found</h3>
+              <p>
+                There are no employees matching your filters or the backend
+                returned no data.
+              </p>
+              <button className="primary-btn" onClick={fetchEmployees}>
+                Refresh list
+              </button>
+            </div>
+          )}
 
-              setShowModal(true);
-            }}
-            onDelete={
-              handleDeleteEmployee
-            }
-            onStatusChange={
-              handleStatusChange
-            }
-          />
-
-          {/* Pagination */}
           <div className="pagination">
             <button
-              disabled={
-                currentPage === 1
-              }
-              onClick={() =>
-                setCurrentPage(
-                  currentPage - 1
-                )
-              }
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
             >
               Previous
             </button>
-
-            {[...Array(totalPages)].map(
-              (_, index) => (
-                <button
-                  key={index + 1}
-                  className={
-                    currentPage ===
-                    index + 1
-                      ? "active-page"
-                      : ""
-                  }
-                  onClick={() =>
-                    setCurrentPage(
-                      index + 1
-                    )
-                  }
-                >
-                  {index + 1}
-                </button>
-              )
-            )}
-
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                className={
+                  currentPage === index + 1 ? "active-page" : ""
+                }
+                onClick={() => setCurrentPage(index + 1)}
+              >
+                {index + 1}
+              </button>
+            ))}
             <button
-              disabled={
-                currentPage ===
-                totalPages
-              }
-              onClick={() =>
-                setCurrentPage(
-                  currentPage + 1
-                )
-              }
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
             >
               Next
             </button>
           </div>
-        </>
-      )}
+        </div>
+      </div>
 
-      {/* Delete Modal */}
-      {/* Delete Modal */}
-        {deleteEmployeeId && (
-            <div className="delete-modal-overlay">
-                <div className="delete-modal">
-                    <h3>Delete Employee</h3>
+      <ConfirmationModal
+        show={Boolean(deleteEmployeeId)}
+        title="Delete Employee"
+        message="Are you sure you want to delete this employee?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteEmployee}
+        onCancel={cancelDeleteEmployee}
+      />
 
-                    <p>
-                     Are you sure you want to delete this employee?
-                    </p>
-
-                    <div className="delete-modal-buttons">
-                        <button
-                         className="cancel-delete-btn"
-                         onClick={() =>setDeleteEmployeeId(null)}>
-                         Cancel
-                        </button>
-
-                        <button
-                            className="confirm-delete-btn"
-                            onClick={async () => {
-                            try {
-                                await deleteEmployee(
-                                    deleteEmployeeId
-                                );
-
-                                fetchEmployees();
-
-                                setDeleteEmployeeId(
-                                    null
-                                );
-                             } catch (err) {
-                                 alert("Failed to delete employee");
-                                }
-                            }}
-                            >
-                             Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-      {/* Add/Edit Modal */}
       {showModal && (
         <AddEmployeeModal
           show={showModal}
           employee={editingEmployee}
+          departments={departments}
           onClose={() => {
             setShowModal(false);
             setEditingEmployee(null);
           }}
           onSubmit={
-            editingEmployee
-              ? handleEditEmployee
-              : handleAddEmployee
+            editingEmployee ? handleEditEmployee : handleAddEmployee
           }
         />
       )}

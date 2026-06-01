@@ -2,41 +2,51 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://127.0.0.1:8000",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-export const getEmployees = () => API.get("/employees");
-export const addEmployee = (data) => API.post("/employees", data);
-export const updateEmployee = (id, data) => API.put(`/employees/${id}`, data);
-export const deleteEmployee = (id) => API.delete(`/employees/${id}`);
-export const loginUser = async (credentials) => {
-  if (
-    credentials.email === "admin@gmail.com" &&
-    credentials.password === "admin123"
-  ) {
-    return {
-      success: true,
-      user: {
-        name: "Admin User",
-        email: "admin@gmail.com",
-        role: "admin",
-      },
-    };
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("employee_token");
+
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (
-    credentials.email === "user@gmail.com" &&
-    credentials.password === "user123"
-  ) {
-    return {
-      success: true,
-      user: {
-        name: "Normal User",
-        email: "user@gmail.com",
-        role: "user",
-      },
-    };
-  }
+  return config;
+});
 
-  throw new Error("Invalid email or password");
+const handleResponse = (response) => response.data;
+
+export const getEmployees = async () => {
+  const response = await API.get("/employees");
+  return handleResponse(response);
 };
+
+export const addEmployee = async (data) => {
+  const response = await API.post("/employees", data);
+  return handleResponse(response);
+};
+
+export const updateEmployee = async (id, data) => {
+  const response = await API.put(`/employees/${id}`, data);
+  return handleResponse(response);
+};
+
+export const deleteEmployee = async (id) => {
+  const response = await API.delete(`/employees/${id}`);
+  return handleResponse(response);
+};
+
+export const getDepartments = async () => {
+  const response = await API.get("/departments");
+  return handleResponse(response);
+};
+
+export const loginUser = async (credentials) => {
+  const response = await API.post("/auth/login", credentials);
+  return handleResponse(response);
+};
+
 export default API;

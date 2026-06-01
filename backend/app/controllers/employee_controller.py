@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from app.controllers.department_controller import get_or_create_department
 from app.models.employee import Employee
 from app.schemas.employee_schema import EmployeeCreate
 
@@ -12,11 +13,13 @@ def get_employee_by_id(employee_id: int, db: Session):
 
 
 def create_employee(employee: EmployeeCreate, db: Session):
+    department = get_or_create_department(employee.department, db)
+
     new_employee = Employee(
         name=employee.name,
         email=employee.email,
         role=employee.role,
-        department=employee.department,
+        department_id=department.id,
         status=employee.status,
         joined_date=employee.joined_date,
     )
@@ -34,10 +37,12 @@ def update_employee(employee_id: int, employee_data: EmployeeCreate, db: Session
     if not employee:
         return None
 
+    department = get_or_create_department(employee_data.department, db)
+
     employee.name = employee_data.name
     employee.email = employee_data.email
     employee.role = employee_data.role
-    employee.department = employee_data.department
+    employee.department_id = department.id
     employee.status = employee_data.status
     employee.joined_date = employee_data.joined_date
 

@@ -14,4 +14,12 @@ class EmployeeResponse(EmployeeCreate):
     id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+
+class DepartmentResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True

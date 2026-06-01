@@ -5,6 +5,8 @@ const EmployeeTable = ({
   onEdit,
   onDelete,
   onStatusChange,
+  onSelect,
+  selectedEmployeeId,
 }) => {
   return (
     <div className="employee-table-container">
@@ -22,7 +24,15 @@ const EmployeeTable = ({
 
         <tbody>
           {employees.map((employee) => (
-            <tr key={employee.id}>
+            <tr
+              key={employee.id}
+              className={
+                selectedEmployeeId === employee.id
+                  ? "selected-row"
+                  : ""
+              }
+              onClick={() => onSelect?.(employee)}
+            >
               {/* Employee */}
               <td>
                 <div className="employee-info">
@@ -91,18 +101,20 @@ const EmployeeTable = ({
                 <div className="action-buttons">
                   <button
                     className="edit-btn"
-                    onClick={() =>
-                      onEdit(employee)
-                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onEdit(employee);
+                    }}
                   >
                     Edit
                   </button>
 
                   <button
                     className="delete-btn"
-                    onClick={() =>
-                      onDelete(employee.id)
-                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(employee.id);
+                    }}
                   >
                     Delete
                   </button>
