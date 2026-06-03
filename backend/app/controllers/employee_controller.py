@@ -4,22 +4,27 @@ from app.models.employee import Employee
 from app.schemas.employee_schema import EmployeeCreate
 
 
-def get_all_employees(db: Session):
-    return db.query(Employee).all()
+def get_all_employees(db: Session, company_id: int):
+    return db.query(Employee).filter(Employee.company_id == company_id).all()
 
 
-def get_employee_by_id(employee_id: int, db: Session):
-    return db.query(Employee).filter(Employee.id == employee_id).first()
+def get_employee_by_id(employee_id: int, db: Session, company_id: int):
+    return (
+        db.query(Employee)
+        .filter(Employee.id == employee_id, Employee.company_id == company_id)
+        .first()
+    )
 
 
-def create_employee(employee: EmployeeCreate, db: Session):
-    department = get_or_create_department(employee.department, db)
+def create_employee(employee: EmployeeCreate, company_id: int, db: Session):
+    department = get_or_create_department(employee.department, company_id, db)
 
     new_employee = Employee(
         name=employee.name,
         email=employee.email,
         role=employee.role,
         department_id=department.id,
+        company_id=company_id,
         status=employee.status,
         joined_date=employee.joined_date,
     )
@@ -31,13 +36,17 @@ def create_employee(employee: EmployeeCreate, db: Session):
     return new_employee
 
 
-def update_employee(employee_id: int, employee_data: EmployeeCreate, db: Session):
-    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+def update_employee(employee_id: int, employee_data: EmployeeCreate, company_id: int, db: Session):
+    employee = (
+        db.query(Employee)
+        .filter(Employee.id == employee_id, Employee.company_id == company_id)
+        .first()
+    )
 
     if not employee:
         return None
 
-    department = get_or_create_department(employee_data.department, db)
+    department = get_or_create_department(employee_data.department, company_id, db)
 
     employee.name = employee_data.name
     employee.email = employee_data.email
@@ -52,8 +61,12 @@ def update_employee(employee_id: int, employee_data: EmployeeCreate, db: Session
     return employee
 
 
-def delete_employee(employee_id: int, db: Session):
-    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+def delete_employee(employee_id: int, company_id: int, db: Session):
+    employee = (
+        db.query(Employee)
+        .filter(Employee.id == employee_id, Employee.company_id == company_id)
+        .first()
+    )
 
     if not employee:
         return None

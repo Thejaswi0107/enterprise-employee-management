@@ -6,6 +6,8 @@ import Employees from "../pages/dashboard/Employees";
 import Departments from "../pages/dashboard/Departments";
 import Attendance from "../pages/dashboard/Attendance";
 import Settings from "../pages/dashboard/Settings";
+import RoleChangeManagement from "../pages/dashboard/RoleChangeManagement";
+import Companies from "../pages/dashboard/Companies";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
@@ -14,6 +16,14 @@ const AppRoutes = () => {
       <Route path="/" element={<DashboardLayout />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="dashboard/employees" element={<Employees />} />
+        <Route
+          path="dashboard/companies"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Companies />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="dashboard/departments"
           element={
@@ -33,8 +43,14 @@ const AppRoutes = () => {
         <Route
           path="dashboard/settings"
           element={
+            <Settings />
+          }
+        />
+        <Route
+          path="dashboard/role-change-management"
+          element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <Settings />
+              <RoleChangeManagement />
             </ProtectedRoute>
           }
         />

@@ -10,6 +10,8 @@ function Signup() {
     password: "",
     confirmPassword: "",
     role: "user",
+    company_id: 1,
+    company: "Company A",
   });
 
   const handleChange = (e) => {
@@ -43,6 +45,8 @@ function Signup() {
       email: formData.email,
       password: formData.password,
       role: formData.role,
+      company_id: Number(formData.company_id),
+      company: formData.company,
     };
 
     localStorage.setItem(
@@ -96,6 +100,23 @@ function Signup() {
           >
             <option value="user">User</option>
             <option value="admin">Admin</option>
+          </select>
+
+          <select
+            name="company_id"
+            value={formData.company_id}
+            onChange={(e) => {
+              const value = e.target.value;
+              setFormData({
+                ...formData,
+                company_id: Number(value),
+                company: value === "2" ? "Company B" : "Company A",
+              });
+            }}
+            required
+          >
+            <option value={1}>Company A</option>
+            <option value={2}>Company B</option>
           </select>
 
           <button type="submit">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 import FormField from "../common/FormField";
 
 const AddEmployeeModal = ({
@@ -8,11 +9,13 @@ const AddEmployeeModal = ({
   employee,
   departments = [],
 }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     role: "",
     department: "",
+    company_id: user?.company_id || 1,
     status: "Active",
     joined_date: "",
   });
@@ -25,6 +28,7 @@ const AddEmployeeModal = ({
         email: employee.email || "",
         role: employee.role || "",
         department: employee.department || "",
+        company_id: employee.company_id || user?.company_id || 1,
         status: employee.status || "Active",
         joined_date: employee.joined_date || "",
       });
@@ -34,12 +38,13 @@ const AddEmployeeModal = ({
         email: "",
         role: "",
         department: "",
+        company_id: user?.company_id || 1,
         status: "Active",
         joined_date: "",
       });
     }
     setErrors({});
-  }, [employee, show]);
+  }, [employee, show, user?.company_id]);
 
   if (!show) return null;
 
@@ -130,34 +135,27 @@ const AddEmployeeModal = ({
           <FormField
             label="Department"
             name="department"
+            type="text"
             value={formData.department}
+            placeholder="Enter Department"
             onChange={handleChange}
             error={errors.department}
+          />
+
+          <FormField
+            label="Company"
+            name="company_id"
+            onChange={handleChange}
           >
-            {departments.length > 0 ? (
-              <select
-                id="department"
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-              >
-                <option value="">Select Department</option>
-                {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                id="department"
-                name="department"
-                type="text"
-                value={formData.department}
-                placeholder="Department"
-                onChange={handleChange}
-              />
-            )}
+            <select
+              id="company_id"
+              name="company_id"
+              value={formData.company_id}
+              onChange={handleChange}
+            >
+              <option value={1}>Company A</option>
+              <option value={2}>Company B</option>
+            </select>
           </FormField>
 
           <FormField

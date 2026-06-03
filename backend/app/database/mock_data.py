@@ -3,27 +3,48 @@ employees = [
         "id": 1,
         "name": "Chelsey Dietrich",
         "email": "lucio_hettinger@annie.ca",
+        "phone": "+1-234-567-8901",
         "role": "Financial Analyst",
         "department": "Finance",
         "status": "On Leave",
-        "joined_date": "2023-08-22"
+        "joined_date": "2023-08-22",
+        "date_of_birth": "1992-03-15",
+        "address": "123 Financial St, New York, NY 10001",
+        "salary": 75000,
+        "manager_name": "John Smith",
+        "skills": "Excel, Financial Analysis, Budgeting, Forecasting",
+        "company": "Company A"
     },
     {
         "id": 2,
         "name": "Clementina DuBuque",
         "email": "rey.padberg@karina.biz",
+        "phone": "+1-234-567-8902",
         "role": "Accountant",
         "department": "Finance",
         "status": "Active",
-        "joined_date": "2024-06-12"
+        "joined_date": "2024-06-12",
+        "date_of_birth": "1995-07-20",
+        "address": "456 Accounting Ave, Boston, MA 02101",
+        "salary": 68000,
+        "manager_name": "Jane Doe",
+        "skills": "Accounting, Tax, GAAP, Quickbooks",
+        "company": "Company A"
     },
     {
         "id": 3,
         "name": "Ervin Howell",
         "email": "shanna@melissa.tv",
+        "phone": "+1-234-567-8903",
         "role": "UI/UX Designer",
         "department": "Design",
         "status": "Active",
-        "joined_date": "2024-05-21"
+        "joined_date": "2024-05-21",
+        "date_of_birth": "1998-11-10",
+        "address": "789 Design Plaza, San Francisco, CA 94102",
+        "salary": 72000,
+        "manager_name": "Michael Johnson",
+        "skills": "Figma, Sketch, UI Design, UX Research, Prototyping",
+        "company": "Company B"
     }
 ]

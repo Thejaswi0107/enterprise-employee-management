@@ -6,6 +6,7 @@ import {
   updateEmployee,
   deleteEmployee,
 } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 import EmployeeTable from "../../components/employees/EmployeeTable";
 import AddEmployeeModal from "../../components/employees/AddEmployeeModal";
@@ -75,9 +76,12 @@ const Employees = () => {
     }
   };
 
+  const { user, activeCompany } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [user?.company_id, activeCompany, user?.email]);
 
   const filteredEmployees = useMemo(
     () =>
@@ -255,6 +259,8 @@ const Employees = () => {
   };
 
   const handleStatusChange = async (id, newStatus) => {
+    if (!isAdmin) return;
+
     const employee = employees.find((emp) => emp.id === id);
 
     if (!employee) return;
@@ -386,15 +392,21 @@ const Employees = () => {
           </button>
         </div>
 
-        <button
-          className="primary-btn"
-          onClick={() => {
-            setEditingEmployee(null);
-            setShowModal(true);
-          }}
-        >
-          + Add Employee
-        </button>
+        {isAdmin ? (
+          <button
+            className="primary-btn"
+            onClick={() => {
+              setEditingEmployee(null);
+              setShowModal(true);
+            }}
+          >
+            + Add Employee
+          </button>
+        ) : (
+          <div className="admin-note">
+            View only: admin users can manage employees within their company.
+          </div>
+        )}
       </div>
 
       <div className="dashboard-main">
@@ -402,6 +414,7 @@ const Employees = () => {
           {currentEmployees.length > 0 ? (
             <EmployeeTable
               employees={currentEmployees}
+              isAdmin={isAdmin}
               onEdit={(employee) => {
                 setEditingEmployee(employee);
                 setShowModal(true);

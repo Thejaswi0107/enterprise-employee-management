@@ -57,6 +57,18 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {isAdmin && (
             <NavLink
+              to="/dashboard/companies"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <Building2 size={20} />
+              Company
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
               to="/dashboard/departments"
               className={({ isActive }) =>
                 isActive ? "nav-link active" : "nav-link"
@@ -81,15 +93,25 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {isAdmin && (
             <NavLink
-              to="/dashboard/settings"
+              to="/dashboard/role-change-management"
               className={({ isActive }) =>
                 isActive ? "nav-link active" : "nav-link"
               }
             >
-              <Settings size={20} />
-              Settings
+              <UserCircle size={20} />
+              Role Requests
             </NavLink>
           )}
+
+          <NavLink
+            to="/dashboard/settings"
+            className={({ isActive }) =>
+              isActive ? "nav-link active" : "nav-link"
+            }
+          >
+            <Settings size={20} />
+            Settings
+          </NavLink>
         </nav>
       </div>
 

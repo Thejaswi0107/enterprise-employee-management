@@ -2,6 +2,7 @@ import React from "react";
 
 const EmployeeTable = ({
   employees,
+  isAdmin,
   onEdit,
   onDelete,
   onStatusChange,
@@ -62,12 +63,14 @@ const EmployeeTable = ({
               <td>
                 <select
                   value={employee.status}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    if (!isAdmin) return;
                     onStatusChange(
                       employee.id,
                       e.target.value
-                    )
-                  }
+                    );
+                  }}
+                  disabled={!isAdmin}
                   className={`status-select ${
                     employee.status === "Active"
                       ? "status-active"
@@ -75,7 +78,7 @@ const EmployeeTable = ({
                         "Inactive"
                       ? "status-inactive"
                       : "status-leave"
-                  }`}
+                  } ${!isAdmin ? "status-disabled" : ""}`}
                 >
                   <option value="Active">
                     Active
@@ -99,25 +102,31 @@ const EmployeeTable = ({
               {/* Actions */}
               <td>
                 <div className="action-buttons">
-                  <button
-                    className="edit-btn"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onEdit(employee);
-                    }}
-                  >
-                    Edit
-                  </button>
+                  {isAdmin ? (
+                    <>
+                      <button
+                        className="edit-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEdit(employee);
+                        }}
+                      >
+                        Edit
+                      </button>
 
-                  <button
-                    className="delete-btn"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onDelete(employee.id);
-                    }}
-                  >
-                    Delete
-                  </button>
+                      <button
+                        className="delete-btn"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDelete(employee.id);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : (
+                    <span className="view-only-label">View only</span>
+                  )}
                 </div>
               </td>
             </tr>

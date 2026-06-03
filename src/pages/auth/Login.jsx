@@ -9,6 +9,7 @@ const Login = () => {
     email: "",
     password: "",
     role: "user",
+    company_id: 1,
   });
 
   const [error, setError] = useState("");
@@ -18,9 +19,10 @@ const Login = () => {
   const [loginSuccess, setLoginSuccess] = useState(false);
 
   const handleChange = (e) => {
+    const value = e.target.name === "company_id" ? Number(e.target.value) : e.target.value;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [e.target.name]: value,
     });
   };
 
@@ -56,6 +58,10 @@ const Login = () => {
           email: savedUser.email,
           role: savedUser.role || formData.role || "user",
           name: savedUser.email,
+          company_id: savedUser.company_id || formData.company_id,
+          company:
+            savedUser.company ||
+            (formData.company_id === 2 ? "Company B" : "Company A"),
         });
         setLoginSuccess(true);
         return;
@@ -114,6 +120,16 @@ const Login = () => {
           >
             <option value="user">User</option>
             <option value="admin">Admin</option>
+          </select>
+
+          <select
+            name="company_id"
+            value={formData.company_id}
+            onChange={handleChange}
+            required
+          >
+            <option value={1}>Company A</option>
+            <option value={2}>Company B</option>
           </select>
 
           <button type="submit">

@@ -4,7 +4,7 @@
   height: 100vh;
   background: #08152f;
   color: white;
-  padding: 18px 14px;
+  padding: 12px 10px;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -23,7 +23,7 @@
 }
 
 .logo {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: bold;
 }
 
@@ -32,7 +32,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .sidebar-close {
@@ -40,26 +40,26 @@
   border: none;
   background: rgba(255, 255, 255, 0.08);
   color: white;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 8px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   color: white;
   text-decoration: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 13px;
   transition: 0.2s;
 }
 
@@ -70,34 +70,36 @@
 
 .sidebar-bottom {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .admin-profile {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .admin-profile h4 {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .admin-profile p {
   margin: 0;
   color: #9ca3af;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .logout-btn {
-  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   background: #ef4444;
   color: white;
   border: none;
