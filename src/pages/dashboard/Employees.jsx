@@ -81,6 +81,27 @@ const Employees = () => {
 
   useEffect(() => {
     fetchEmployees();
+
+    const handleEmployeesChanged = () => {
+      fetchEmployees();
+    };
+
+    window.addEventListener("employeesChanged", handleEmployeesChanged);
+    return () => {
+      window.removeEventListener("employeesChanged", handleEmployeesChanged);
+    };
+  }, [user?.company_id, activeCompany, user?.email]);
+
+  // Listen for storage events so other tabs/windows also refresh when employees change
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "employees_changed_at") {
+        fetchEmployees();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, [user?.company_id, activeCompany, user?.email]);
 
   const filteredEmployees = useMemo(

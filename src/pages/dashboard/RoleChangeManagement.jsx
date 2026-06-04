@@ -17,12 +17,6 @@ function RoleChangeManagement() {
     admin_comments: ""
   });
 
-  useEffect(() => {
-    if (user?.role === "admin") {
-      fetchRequests();
-    }
-  }, [user]);
-
   const fetchRequests = async () => {
     try {
       setLoading(true);
@@ -41,6 +35,12 @@ function RoleChangeManagement() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.role === "admin") {
+      fetchRequests();
+    }
+  }, [user]);
 
   const handleRespondToRequest = async (requestId) => {
     if (!responseData.status) {

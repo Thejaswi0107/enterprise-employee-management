@@ -9,6 +9,7 @@ from ..controllers.role_change_controller import (
     approve_role_change_request,
     get_user_requests
 )
+from ..controllers.audit_controller import create_audit_log
 
 router = APIRouter(prefix="/api/role-change", tags=["role-change"])
 
@@ -21,6 +22,13 @@ def submit_role_change_request(
     """User submits a role change request"""
     try:
         new_request = create_role_change_request(db, request_data)
+        create_audit_log(
+            db,
+            user_name=request_data.user_name,
+            action="Role Change Requested",
+            related_name=request_data.user_name,
+            related_email=request_data.user_email,
+        )
         return {
             "success": True,
             "data": new_request.to_dict(),
@@ -76,6 +84,14 @@ def respond_to_role_change_request(
         
         if not updated_request:
             raise HTTPException(status_code=404, detail="Request not found")
+
+        create_audit_log(
+            db,
+            user_name=updated_request.admin_email,
+            action=("Role Change Approved" if response_data.status == "Approved" else "Role Change Rejected"),
+            related_name=updated_request.user_name,
+            related_email=updated_request.user_email,
+        )
         
         return {
             "success": True,

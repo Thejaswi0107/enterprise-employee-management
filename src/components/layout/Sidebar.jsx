@@ -1,4 +1,4 @@
-import React from "react";
+// React import not required with the new JSX transform
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -100,6 +100,18 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <UserCircle size={20} />
               Role Requests
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
+              to="/dashboard/audit-logs"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <Building2 size={20} />
+              Audit Logs
             </NavLink>
           )}
 

@@ -4,13 +4,22 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.controllers.auth_controller import get_user_by_email
-from app.controllers.department_controller import list_departments
+from app.controllers.department_controller import get_or_create_department, list_departments
 from app.controllers.employee_controller import (
     get_all_employees,
     get_employee_by_id,
     create_employee,
     update_employee as update_employee_controller,
     delete_employee as delete_employee_controller,
+)
+from app.controllers.audit_controller import create_audit_log, list_audit_logs
+from app.controllers.analytics_controller import (
+    count_total_employees,
+    count_active_employees,
+    list_employees_by_department,
+    list_employees_by_role,
+    employee_status_overview,
+    count_pending_role_requests,
 )
 from app.models.employee import Employee
 from app.schemas.employee_schema import EmployeeCreate
@@ -29,12 +38,18 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="Invalid user")
 
-    if user["role"] == "admin" and requested_company_id is not None:
-        if requested_company_id not in (1, 2):
-            raise HTTPException(status_code=400, detail="Invalid company selection")
+    if user["role"] == "admin":
+        if requested_company_id is not None:
+            if requested_company_id not in (1, 2):
+                raise HTTPException(status_code=400, detail="Invalid company selection")
 
-        user["company_id"] = requested_company_id
-        user["company"] = "Company A" if requested_company_id == 1 else "Company B"
+            user["company_id"] = requested_company_id
+            user["company"] = "Company A" if requested_company_id == 1 else "Company B"
+        else:
+            user["company_id"] = None
+    else:
+        if requested_company_id is not None and requested_company_id != user["company_id"]:
+            raise HTTPException(status_code=403, detail="Company access denied")
 
     return user
 
@@ -99,6 +114,14 @@ def add_employee(
         )
 
     new_employee = create_employee(employee, company_id, db)
+    create_audit_log(
+        db,
+        user_name=current_user["name"],
+        action="Employee Created",
+        related_name=new_employee.name,
+        related_email=new_employee.email,
+        company_id=company_id,
+    )
 
     return {
         "success": True,
@@ -127,7 +150,7 @@ def update_employee(
     updated = update_employee_controller(
         employee_id,
         employee,
-        company_id,
+        None if current_user["role"] == "admin" else company_id,
         db,
     )
 
@@ -136,6 +159,15 @@ def update_employee(
             status_code=404,
             detail="Employee not found"
         )
+
+    create_audit_log(
+        db,
+        user_name=current_user["name"],
+        action="Employee Updated",
+        related_name=updated.name,
+        related_email=updated.email,
+        company_id=company_id,
+    )
 
     return {
         "success": True,
@@ -155,7 +187,7 @@ def delete_employee(
 
     removed = delete_employee_controller(
         employee_id,
-        current_user["company_id"],
+        None if current_user["role"] == "admin" else current_user["company_id"],
         db,
     )
 
@@ -164,6 +196,15 @@ def delete_employee(
             status_code=404,
             detail="Employee not found"
         )
+
+    create_audit_log(
+        db,
+        user_name=current_user["name"],
+        action="Employee Deleted",
+        related_name=removed.name,
+        related_email=removed.email,
+        company_id=removed.company_id,
+    )
 
     return {
         "success": True,
@@ -180,4 +221,42 @@ def get_departments(
     return {
         "success": True,
         "data": [department.to_dict() for department in departments]
+    }
+
+
+@router.get("/audit-logs")
+def get_audit_logs(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    logs = list_audit_logs(db, current_user["company_id"])
+    return {
+        "success": True,
+        "data": [log.to_dict() for log in logs]
+    }
+
+
+@router.get("/analytics/dashboard")
+def get_dashboard_analytics(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    total_employees = count_total_employees(db, current_user["company_id"])
+    active_employees = count_active_employees(db, current_user["company_id"])
+    departments = list_employees_by_department(db, current_user["company_id"])
+    roles = list_employees_by_role(db, current_user["company_id"])
+    status_overview = employee_status_overview(db, current_user["company_id"])
+    pending_requests = count_pending_role_requests(db)
+
+    return {
+        "success": True,
+        "data": {
+            "totalEmployees": total_employees,
+            "activeEmployees": active_employees,
+            "totalDepartments": len(departments),
+            "pendingRequests": pending_requests,
+            "employeesByDepartment": departments,
+            "employeesByRole": roles,
+            "statusOverview": status_overview,
+        }
     }

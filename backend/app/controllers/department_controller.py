@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.department_model import Department
 
@@ -18,8 +19,11 @@ def get_or_create_department(name: str, company_id: int, db: Session) -> Departm
     return department
 
 
-def list_departments(db: Session, company_id: int):
-    return db.query(Department).filter(Department.company_id == company_id).all()
+def list_departments(db: Session, company_id: Optional[int] = None):
+    query = db.query(Department)
+    if company_id is not None:
+        query = query.filter(Department.company_id == company_id)
+    return query.all()
 
 
 def get_department_by_id(department_id: int, db: Session):

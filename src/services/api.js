@@ -19,7 +19,7 @@ API.interceptors.request.use((config) => {
     config.headers["X-User-Email"] = user.email;
   }
 
-  if (user?.company_id && config.headers) {
+  if (user?.company_id && config.headers && user?.role !== "admin") {
     config.headers["X-User-Company-Id"] = String(user.company_id);
   }
 
@@ -187,12 +187,38 @@ const transformJsonPlaceholderUser = (user) => {
   };
 };
 
+const getRegisteredUsers = () => {
+  try {
+    return JSON.parse(localStorage.getItem("registeredUsers")) || [];
+  } catch (error) {
+    return [];
+  }
+};
+
 export const getCompanies = async () => {
   try {
     const response = await API.get("/companies");
     return handleResponse(response);
   } catch (error) {
     console.warn("Failed to load companies", error.message);
+
+    const registeredUsers = getRegisteredUsers();
+    const localEmployees = loadLocalEmployees();
+    const deletedIds = loadDeletedEmployeeIds();
+
+    const employeeCounts = [1, 2].map((companyId) => {
+      const employees = [...mockEmployeesData, ...localEmployees].filter(
+        (employee) =>
+          (employee.company_id || (employee.id <= 5 ? 1 : 2)) === companyId &&
+          !deletedIds.includes(employee.id)
+      );
+      return employees.length;
+    });
+
+    const userCounts = [1, 2].map((companyId) =>
+      registeredUsers.filter((user) => user.company_id === companyId).length
+    );
+
     return {
       success: true,
       data: [
@@ -200,16 +226,16 @@ export const getCompanies = async () => {
           id: 1,
           name: "Company A",
           slug: "company-a",
-          employeeCount: 0,
-          userCount: 0,
+          employeeCount: employeeCounts[0],
+          userCount: userCounts[0],
           status: "Active",
         },
         {
           id: 2,
           name: "Company B",
           slug: "company-b",
-          employeeCount: 0,
-          userCount: 0,
+          employeeCount: employeeCounts[1],
+          userCount: userCounts[1],
           status: "Active",
         },
       ],
@@ -221,6 +247,7 @@ export const getCompanies = async () => {
 export const getEmployees = async () => {
   const currentUser = JSON.parse(localStorage.getItem("employee_user") || "null");
   const currentCompanyId = currentUser?.company_id || null;
+  const isAdmin = currentUser?.role === "admin";
 
   const transformUser = (user) => {
     const companyId = user.id <= 5 ? 1 : 2;
@@ -274,7 +301,9 @@ export const getEmployees = async () => {
       ? response.data.map(transformJsonPlaceholderUser)
       : [];
 
-    const filteredEmployees = currentCompanyId
+    const filteredEmployees = isAdmin
+      ? apiEmployees
+      : currentCompanyId
       ? apiEmployees.filter((employee) => employee.company_id === currentCompanyId)
       : apiEmployees;
 
@@ -301,9 +330,16 @@ export const getEmployees = async () => {
       }
     });
 
+    const allEmployees = Array.from(employeeMap.values());
+    const finalEmployees = isAdmin
+      ? allEmployees
+      : currentCompanyId
+      ? allEmployees.filter((employee) => employee.company_id === currentCompanyId)
+      : allEmployees;
+
     return {
       success: true,
-      data: Array.from(employeeMap.values()),
+      data: finalEmployees,
       message: "Employee data loaded from JSONPlaceholder",
     };
   } catch (error) {
@@ -340,7 +376,9 @@ export const getEmployees = async () => {
     });
 
     const allEmployees = Array.from(employeeMap.values());
-    const filteredEmployees = currentCompanyId
+    const filteredEmployees = isAdmin
+      ? allEmployees
+      : currentCompanyId
       ? allEmployees.filter((employee) => employee.company_id === currentCompanyId)
       : allEmployees;
 
@@ -365,8 +403,9 @@ export const addEmployee = async (data) => {
     const localEmployees = loadLocalEmployees();
     const updatedEmployees = [...localEmployees, savedEmployee];
     saveLocalEmployees(updatedEmployees);
-    // Notify UI that employees changed
+    // Notify UI that employees changed (same-tab) and signal other tabs via localStorage
     try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
+    try { localStorage.setItem('employees_changed_at', String(Date.now())); } catch (e) {}
 
     return {
       success: true,
@@ -378,8 +417,9 @@ export const addEmployee = async (data) => {
     const localEmployees = loadLocalEmployees();
     const updatedEmployees = [...localEmployees, newEmployee];
     saveLocalEmployees(updatedEmployees);
-    // Notify UI that employees changed
+    // Notify UI that employees changed (same-tab) and signal other tabs via localStorage
     try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
+    try { localStorage.setItem('employees_changed_at', String(Date.now())); } catch (e) {}
 
     return {
       success: true,
@@ -400,8 +440,9 @@ export const updateEmployee = async (id, data) => {
     const updatedLocalEmployees = localEmployees.filter((employee) => employee.id !== id);
     updatedLocalEmployees.push(responseData);
     saveLocalEmployees(updatedLocalEmployees);
-    // Notify UI that employees changed
+    // Notify UI that employees changed (same-tab) and signal other tabs via localStorage
     try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
+    try { localStorage.setItem('employees_changed_at', String(Date.now())); } catch (e) {}
 
     return {
       success: true,
@@ -472,8 +513,49 @@ export const getDepartments = async () => {
     console.warn("Error getting departments via API", error.message);
     return {
       success: true,
-      data: ["Finance", "Design", "IT", "Management"],
-      message: "Using default departments (backend unavailable)"
+      data: [
+        { id: 1, name: "Finance" },
+        { id: 2, name: "Design" },
+        { id: 3, name: "IT" },
+        { id: 4, name: "Management" },
+      ],
+      message: "Using default departments (backend unavailable)",
+    };
+  }
+};
+
+export const getAuditLogs = async () => {
+  try {
+    const response = await API.get("/audit-logs");
+    return {
+      success: response.data?.success || true,
+      data: response.data?.data || [],
+      message: response.data?.message || "Audit logs retrieved successfully"
+    };
+  } catch (error) {
+    console.warn("Error fetching audit logs via API", error.message);
+    return {
+      success: false,
+      data: [],
+      message: "Unable to load audit logs"
+    };
+  }
+};
+
+export const getDashboardAnalytics = async () => {
+  try {
+    const response = await API.get("/analytics/dashboard");
+    return {
+      success: response.data?.success || true,
+      data: response.data?.data || {},
+      message: response.data?.message || "Analytics retrieved successfully"
+    };
+  } catch (error) {
+    console.warn("Error fetching analytics via API", error.message);
+    return {
+      success: false,
+      data: {},
+      message: "Unable to load analytics data"
     };
   }
 };

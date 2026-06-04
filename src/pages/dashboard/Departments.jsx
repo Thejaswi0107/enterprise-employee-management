@@ -1,52 +1,68 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { getEmployees } from "../../services/api";
 import "../../components/employees/Employees.css";
 
 const Departments = () => {
-  const [departments, setDepartments] = useState([
-    {
-      id: 1,
-      name: "HR",
-      employees: 12,
-      manager: "Rahul Sharma",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "IT",
-      employees: 35,
-      manager: "Anjali Verma",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Finance",
-      employees: 10,
-      manager: "Keerthu",
-      status: "Inactive",
-    },
-    {
-      id: 4,
-      name: "Design",
-      employees: 8,
-      manager: "Pushpa",
-      status: "Active",
-    },
-  ]);
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [departmentName, setDepartmentName] = useState("");
+  const [managerName, setManagerName] = useState("");
 
-  const [showModal, setShowModal] =
-    useState(false);
+  useEffect(() => {
+    const loadDepartments = async () => {
+      setLoading(true);
+      setError("");
 
-  const [departmentName, setDepartmentName] =
-    useState("");
+      try {
+        const response = await getEmployees();
+        const employees = response.data || [];
 
-  const [managerName, setManagerName] =
-    useState("");
+        const departmentMap = employees.reduce((acc, employee) => {
+          const department = employee.department || "Unknown";
+          if (!acc[department]) {
+            acc[department] = {
+              id: department,
+              name: department,
+              employees: 0,
+              manager: "Team Lead",
+              status: "Active",
+            };
+          }
+          acc[department].employees += 1;
+          return acc;
+        }, {});
+
+        setDepartments(Object.values(departmentMap));
+      } catch (loadError) {
+        console.error(loadError);
+        setError(
+          loadError?.response?.data?.detail ||
+            loadError?.message ||
+            "Unable to load department data"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDepartments();
+  }, []);
+
+  const filteredDepartments = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return departments;
+    }
+
+    return departments.filter((department) =>
+      department.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [departments, searchTerm]);
 
   const handleAddDepartment = () => {
-    if (
-      !departmentName ||
-      !managerName
-    ) {
+    if (!departmentName || !managerName) {
       alert("Please fill all fields");
       return;
     }
@@ -54,19 +70,14 @@ const Departments = () => {
     const newDepartment = {
       id: Date.now(),
       name: departmentName,
-      employees: 11,
+      employees: 0,
       manager: managerName,
       status: "Active",
     };
 
-    setDepartments([
-      newDepartment,
-      ...departments,
-    ]);
-
+    setDepartments([newDepartment, ...departments]);
     setDepartmentName("");
     setManagerName("");
-
     setShowModal(false);
   };
 
@@ -88,53 +99,44 @@ const Departments = () => {
         <input
           type="text"
           placeholder="Search department..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
 
-        <button
-          onClick={() =>
-            setShowModal(true)
-          }
-        >
+        <button onClick={() => setShowModal(true)}>
           + Add Department
         </button>
       </div>
 
-      {/* Table */}
-      <div className="employee-table-container">
-        <table className="employee-table">
-          <thead>
-            <tr>
-              <th>Department</th>
-              <th>Manager</th>
-              <th>Total Employees</th>
-            </tr>
-          </thead>
+      {loading ? (
+        <div className="loading-state">Loading departments...</div>
+      ) : error ? (
+        <div className="error-state">{error}</div>
+      ) : (
+        <div className="employee-table-container">
+          <table className="employee-table">
+            <thead>
+              <tr>
+                <th>Department</th>
+                <th>Manager</th>
+                <th>Total Employees</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {departments.map(
-              (department) => (
+            <tbody>
+              {filteredDepartments.map((department) => (
                 <tr key={department.id}>
                   <td>
-                    <strong>
-                      {department.name}
-                    </strong>
+                    <strong>{department.name}</strong>
                   </td>
-
-                  <td>
-                    {department.manager}
-                  </td>
-
-                  <td>
-                    {
-                      department.employees
-                    }
-                  </td>
+                  <td>{department.manager}</td>
+                  <td>{department.employees}</td>
                 </tr>
-              )
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (

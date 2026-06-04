@@ -1,4 +1,4 @@
-import React from "react";
+// React import not required with the new JSX transform
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";

@@ -9,6 +9,7 @@ from app.routes.company_routes import router as company_router
 from app.models.employee import Employee
 from app.models.department_model import Department
 from app.models.company_model import Company
+from app.models.audit_log import AuditLog
 from app.database.mock_data import employees as mock_employees
 
 Base.metadata.create_all(bind=engine)

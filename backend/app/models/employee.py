@@ -32,6 +32,7 @@ class Employee(Base):
             "phone": self.phone,
             "role": self.role,
             "department": self.department.name if self.department else None,
+            "company_id": self.company_id,
             "company": self.company.name if self.company else None,
             "status": self.status,
             "joined_date": self.joined_date,

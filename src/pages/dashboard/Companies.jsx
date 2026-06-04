@@ -12,12 +12,13 @@ const Companies = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchCompanies();
+    // fetchCompanies declared below; call it here after declaration
   }, []);
 
   const fetchCompanies = async () => {
     try {
       setLoading(true);
+      setError("");
       const response = await getCompanies();
 
       if (!response?.success) {
@@ -32,6 +33,19 @@ const Companies = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCompanies();
+
+    const handleEmployeesChanged = () => {
+      fetchCompanies();
+    };
+
+    window.addEventListener("employeesChanged", handleEmployeesChanged);
+    return () => {
+      window.removeEventListener("employeesChanged", handleEmployeesChanged);
+    };
+  }, []);
 
   const handleCompanySelect = (company) => {
     setActiveCompany(company.id, company.name);

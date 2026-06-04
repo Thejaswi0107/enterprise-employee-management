@@ -1,4 +1,4 @@
-import React from "react";
+// React import not required with the new JSX transform
 import { Routes, Route, Navigate } from "react-router-dom";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Dashboard from "../pages/dashboard/Dashboard";
@@ -7,6 +7,7 @@ import Departments from "../pages/dashboard/Departments";
 import Attendance from "../pages/dashboard/Attendance";
 import Settings from "../pages/dashboard/Settings";
 import RoleChangeManagement from "../pages/dashboard/RoleChangeManagement";
+import AuditLogs from "../pages/dashboard/AuditLogs";
 import Companies from "../pages/dashboard/Companies";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -51,6 +52,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <RoleChangeManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/audit-logs"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AuditLogs />
             </ProtectedRoute>
           }
         />

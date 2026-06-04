@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getDepartments, getEmployees } from "../../services/api";
+import { getDepartments, getEmployees, getDashboardAnalytics } from "../../services/api";
 import {
   FaUsers,
   FaUserCheck,
-  FaClipboardCheck,
   FaBuilding,
+  FaBell,
 } from "react-icons/fa";
 
 import {
@@ -24,19 +24,24 @@ import {
 } from "recharts";
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user, activeCompany } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        const employeeResponse = await getEmployees();
-        const departmentResponse = await getDepartments();
+        const [employeeResponse, departmentResponse, analyticsResponse] = await Promise.all([
+          getEmployees(),
+          getDepartments(),
+          getDashboardAnalytics(),
+        ]);
 
         setEmployees(employeeResponse.data || []);
         setDepartments(departmentResponse.data || []);
+        setAnalytics(analyticsResponse.data || null);
       } catch (error) {
         console.error("Failed to load dashboard data", error);
       } finally {
@@ -45,12 +50,14 @@ function Dashboard() {
     };
 
     loadDashboard();
-  }, []);
+  }, [activeCompany]);
 
-  const totalEmployees = employees.length;
-  const activeEmployees = employees.filter(
+  const totalEmployees = analytics?.totalEmployees ?? employees.length;
+  const activeEmployees = analytics?.activeEmployees ?? employees.filter(
     (emp) => emp.status?.toLowerCase() === "active"
   ).length;
+  const totalDepartments = analytics?.totalDepartments ?? departments.length;
+  const pendingRequests = analytics?.pendingRequests ?? 0;
   const attendanceRate = totalEmployees
     ? Math.round((activeEmployees / totalEmployees) * 100)
     : 0;
@@ -69,29 +76,50 @@ function Dashboard() {
       bg: "bg-green-100",
     },
     {
-      title: "Attendance Today",
-      value: `${attendanceRate}%`,
-      icon: <FaClipboardCheck className="text-purple-600" />,
-      bg: "bg-purple-100",
-    },
-    {
       title: "Departments",
-      value: departments.length,
+      value: totalDepartments,
       icon: <FaBuilding className="text-orange-600" />,
       bg: "bg-orange-100",
     },
+    {
+      title: "Pending Requests",
+      value: pendingRequests,
+      icon: <FaBell className="text-purple-600" />,
+      bg: "bg-purple-100",
+    },
   ];
 
-  const departmentData = departments.map((department) => {
-    const departmentCount = employees.filter(
-      (employee) => employee.department === department.name
-    ).length;
+  const departmentData = analytics?.employeesByDepartment?.length
+    ? analytics.employeesByDepartment.map((entry) => ({
+        name: entry.department,
+        value: entry.count,
+      }))
+    : departments.map((department) => {
+        const departmentCount = employees.filter(
+          (employee) => employee.department === department.name
+        ).length;
 
-    return {
-      name: department.name,
-      value: departmentCount || 1,
-    };
-  });
+        return {
+          name: department.name,
+          value: departmentCount || 1,
+        };
+      });
+
+  const roleData = analytics?.employeesByRole?.length
+    ? analytics.employeesByRole
+    : employees.reduce((acc, employee) => {
+        const existing = acc.find((item) => item.role === employee.role);
+        if (existing) existing.count += 1;
+        else acc.push({ role: employee.role || "Unknown", count: 1 });
+        return acc;
+      }, []);
+
+  const statusData = analytics?.statusOverview?.length
+    ? analytics.statusOverview
+    : [
+        { status: "Active", count: activeEmployees },
+        { status: "Inactive", count: totalEmployees - activeEmployees },
+      ];
 
   const chartData = [
     { day: "Mon", employees: Math.max(totalEmployees - 10, 0) },
@@ -204,42 +232,57 @@ function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div className="bg-white rounded-2xl shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-4">Attendance Analytics</h2>
+          <h2 className="text-xl font-semibold mb-4">Role Distribution</h2>
 
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={attendanceData}>
-              <XAxis dataKey="day" />
+            <BarChart data={roleData}>
+              <XAxis dataKey="role" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="attendance" fill="#2563eb" />
+              <Bar dataKey="count" fill="#2563eb" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Employees</h2>
+          <h2 className="text-xl font-semibold mb-4">Status Overview</h2>
 
-          <div className="space-y-4">
-            {recentEmployees.length > 0 ? (
-              recentEmployees.map((employee, index) => (
-                <div
-                  key={index}
-                  className="flex justify-between items-center border-b pb-3"
-                >
-                  <div>
-                    <p className="font-medium">{employee.name}</p>
-                    <p className="text-sm text-gray-500">{employee.role}</p>
-                  </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={statusData} dataKey="count" nameKey="status" outerRadius={100} label>
+                {statusData.map((entry, index) => (
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
-                  <span className="text-sm text-gray-400">
-                    {employee.joined_date}
-                  </span>
+      <div className="bg-white rounded-2xl shadow-sm border p-6 mt-8">
+        <h2 className="text-xl font-semibold mb-4">Recent Employees</h2>
+
+        <div className="space-y-4">
+          {recentEmployees.length > 0 ? (
+            recentEmployees.map((employee, index) => (
+              <div
+                key={index}
+                className="flex justify-between items-center border-b pb-3"
+              >
+                <div>
+                  <p className="font-medium">{employee.name}</p>
+                  <p className="text-sm text-gray-500">{employee.role}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No recent employees available.</p>
-            )}
-          </div>
+
+                <span className="text-sm text-gray-400">
+                  {employee.joined_date}
+                </span>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No recent employees available.</p>
+          )}
         </div>
       </div>
 
@@ -252,7 +295,7 @@ function Dashboard() {
           </div>
 
           <div className="border-b pb-3">
-            {departments.length} active departments maintained.
+            {totalDepartments} active departments maintained.
           </div>
 
           <div className="border-b pb-3">
