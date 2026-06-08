@@ -11,15 +11,21 @@ API.interceptors.request.use((config) => {
   const token = localStorage.getItem("employee_token");
   const user = JSON.parse(localStorage.getItem("employee_user") || "null");
 
-  if (token && config.headers) {
+  config.headers = config.headers || {};
+
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  if (user?.email && config.headers) {
+  if (user?.email) {
     config.headers["X-User-Email"] = user.email;
   }
 
-  if (user?.company_id && config.headers && user?.role !== "admin") {
+  if (user?.role) {
+    config.headers["X-User-Role"] = user.role;
+  }
+
+  if (user?.company_id) {
     config.headers["X-User-Company-Id"] = String(user.company_id);
   }
 
@@ -68,6 +74,20 @@ const saveDeletedEmployeeIds = (ids) => {
     localStorage.setItem(DELETED_EMPLOYEES_KEY, JSON.stringify(ids));
   } catch (error) {
     console.warn("Failed to save deleted employee IDs", error);
+  }
+};
+
+const dispatchSystemUpdate = () => {
+  try {
+    window.dispatchEvent(new Event("employeesChanged"));
+  } catch (e) {
+    console.warn("Failed to dispatch system update event", e);
+  }
+
+  try {
+    localStorage.setItem("employees_changed_at", String(Date.now()));
+  } catch (e) {
+    console.warn("Failed to set system update timestamp", e);
   }
 };
 
@@ -403,9 +423,7 @@ export const addEmployee = async (data) => {
     const localEmployees = loadLocalEmployees();
     const updatedEmployees = [...localEmployees, savedEmployee];
     saveLocalEmployees(updatedEmployees);
-    // Notify UI that employees changed (same-tab) and signal other tabs via localStorage
-    try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
-    try { localStorage.setItem('employees_changed_at', String(Date.now())); } catch (e) {}
+    dispatchSystemUpdate();
 
     return {
       success: true,
@@ -417,9 +435,7 @@ export const addEmployee = async (data) => {
     const localEmployees = loadLocalEmployees();
     const updatedEmployees = [...localEmployees, newEmployee];
     saveLocalEmployees(updatedEmployees);
-    // Notify UI that employees changed (same-tab) and signal other tabs via localStorage
-    try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
-    try { localStorage.setItem('employees_changed_at', String(Date.now())); } catch (e) {}
+    dispatchSystemUpdate();
 
     return {
       success: true,
@@ -440,9 +456,7 @@ export const updateEmployee = async (id, data) => {
     const updatedLocalEmployees = localEmployees.filter((employee) => employee.id !== id);
     updatedLocalEmployees.push(responseData);
     saveLocalEmployees(updatedLocalEmployees);
-    // Notify UI that employees changed (same-tab) and signal other tabs via localStorage
-    try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
-    try { localStorage.setItem('employees_changed_at', String(Date.now())); } catch (e) {}
+    dispatchSystemUpdate();
 
     return {
       success: true,
@@ -456,8 +470,7 @@ export const updateEmployee = async (id, data) => {
     const updatedLocalEmployees = localEmployees.filter((employee) => employee.id !== id);
     updatedLocalEmployees.push(updatedEmployee);
     saveLocalEmployees(updatedLocalEmployees);
-    // Notify UI that employees changed
-    try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
+    dispatchSystemUpdate();
 
     return {
       success: true,
@@ -479,8 +492,7 @@ export const deleteEmployee = async (id) => {
       saveDeletedEmployeeIds([...deletedIds, id]);
     }
 
-    // Notify UI that employees changed
-    try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
+    dispatchSystemUpdate();
 
     return handleResponse(response);
   } catch (error) {
@@ -494,8 +506,7 @@ export const deleteEmployee = async (id) => {
       saveDeletedEmployeeIds([...deletedIds, id]);
     }
 
-    // Notify UI that employees changed
-    try { window.dispatchEvent(new Event('employeesChanged')); } catch (e) {}
+    dispatchSystemUpdate();
 
     return {
       success: true,
@@ -533,11 +544,16 @@ export const getAuditLogs = async () => {
       message: response.data?.message || "Audit logs retrieved successfully"
     };
   } catch (error) {
-    console.warn("Error fetching audit logs via API", error.message);
+    const message =
+      error.response?.data?.detail ||
+      error.response?.statusText ||
+      error.message ||
+      "Unable to load audit logs";
+    console.warn("Error fetching audit logs via API", message);
     return {
       success: false,
       data: [],
-      message: "Unable to load audit logs"
+      message,
     };
   }
 };
@@ -560,6 +576,92 @@ export const getDashboardAnalytics = async () => {
   }
 };
 
+export const searchEmployees = async (searchTerm = "", roleFilter = "", departmentFilter = "", page = 1, limit = 10) => {
+  try {
+    const response = await API.get("/employees/search", {
+      params: {
+        search: searchTerm,
+        role: roleFilter,
+        department: departmentFilter,
+        page,
+        limit
+      }
+    });
+    return {
+      success: response.data?.success || true,
+      data: response.data?.data || [],
+      total: response.data?.total || 0,
+      page: response.data?.page || 1,
+      limit: response.data?.limit || 10,
+      message: response.data?.message || "Search completed"
+    };
+  } catch (error) {
+    console.warn("Error searching employees", error.message);
+    return {
+      success: false,
+      data: [],
+      total: 0,
+      page: 1,
+      limit: 10,
+      message: "Unable to search employees"
+    };
+  }
+};
+
+export const getNotifications = async () => {
+  try {
+    const response = await API.get("/notifications", {
+      params: {
+        limit: 1000,
+        unread_only: true,
+      },
+    });
+    return {
+      success: response.data?.success || true,
+      data: response.data?.data || [],
+      unreadCount: response.data?.unread_count || 0,
+      message: response.data?.message || "Notifications retrieved"
+    };
+  } catch (error) {
+    const message =
+      error.response?.data?.detail ||
+      error.response?.statusText ||
+      error.message ||
+      "Unable to load notifications";
+    console.warn("Error fetching notifications", message);
+    return {
+      success: false,
+      data: [],
+      unreadCount: 0,
+      message,
+    };
+  }
+};
+
+export const clearNotifications = async () => {
+  try {
+    const response = await API.post("/notifications/clear-all");
+    dispatchSystemUpdate();
+    return {
+      success: response.data?.success || true,
+      cleared: response.data?.cleared || 0,
+      message: response.data?.message || "Notifications cleared"
+    };
+  } catch (error) {
+    const message =
+      error.response?.data?.detail ||
+      error.response?.statusText ||
+      error.message ||
+      "Unable to clear notifications";
+    console.warn("Error clearing notifications", message);
+    return {
+      success: false,
+      cleared: 0,
+      message,
+    };
+  }
+};
+
 export const loginUser = async (credentials) => {
   try {
     const response = await API.post("/auth/login", credentials);
@@ -577,6 +679,7 @@ export const submitRoleChangeRequest = async (requestData) => {
   
   try {
     const response = await API.post("/api/role-change/request", requestData);
+    dispatchSystemUpdate();
     return {
       success: true,
       data: response.data,
@@ -698,6 +801,7 @@ export const respondToRoleChangeRequest = async (requestId, responseData) => {
   
   try {
     const response = await API.put(`/api/role-change/request/${requestId}`, responseData);
+    dispatchSystemUpdate();
     return {
       success: response.data?.success || true,
       data: response.data?.data || {},

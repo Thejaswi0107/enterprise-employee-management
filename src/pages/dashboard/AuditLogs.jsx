@@ -6,19 +6,25 @@ function AuditLogs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadLogs = async () => {
       try {
         setLoading(true);
+        setError("");
         const response = await getAuditLogs();
         if (response.success) {
           setLogs(response.data || []);
         } else {
-          setToast({ type: "error", message: response.message || "Unable to load audit logs" });
+          const message = response.message || "Unable to load audit logs";
+          setError(message);
+          setToast({ type: "error", message });
         }
       } catch (error) {
-        setToast({ type: "error", message: error.message || "Failed to load audit logs" });
+        const message = error.message || "Failed to load audit logs";
+        setError(message);
+        setToast({ type: "error", message });
       } finally {
         setLoading(false);
       }
@@ -39,6 +45,18 @@ function AuditLogs() {
       <p>Track key employee actions for compliance and accountability.</p>
 
       {toast && <Toast type={toast.type} message={toast.message} />}
+      {error && (
+        <div style={{
+          marginTop: "16px",
+          padding: "16px",
+          borderRadius: "12px",
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+          border: "1px solid #fca5a5"
+        }}>
+          {error}
+        </div>
+      )}
 
       <div
         style={{
@@ -67,6 +85,7 @@ function AuditLogs() {
                   <th style={tableHeader}>Action</th>
                   <th style={tableHeader}>Related To</th>
                   <th style={tableHeader}>Related Email</th>
+                  <th style={tableHeader}>Details</th>
                   <th style={tableHeader}>Company</th>
                 </tr>
               </thead>
@@ -78,6 +97,7 @@ function AuditLogs() {
                     <td style={cellStyle}>{log.action}</td>
                     <td style={cellStyle}>{log.related_name || "N/A"}</td>
                     <td style={cellStyle}>{log.related_email || "N/A"}</td>
+                    <td style={cellStyle}>{log.details || "-"}</td>
                     <td style={cellStyle}>{log.company_id ? `Company ${log.company_id === 1 ? "A" : "B"}` : "Global"}</td>
                   </tr>
                 ))}

@@ -1,8 +1,9 @@
-import { FaBell, FaBars, FaMoon, FaSun } from "react-icons/fa";
+import { FaBars, FaMoon, FaSun } from "react-icons/fa";
 import { UserCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import NotificationCenter from "./NotificationCenter";
 
 function Navbar({ toggleSidebar }) {
   const navigate = useNavigate();
@@ -69,12 +70,7 @@ function Navbar({ toggleSidebar }) {
 
         <div className="hidden md:block text-gray-700 font-medium">{today}</div>
 
-        <div className="relative">
-          <FaBell className="text-xl text-gray-600" />
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded-full">
-            3
-          </span>
-        </div>
+        <NotificationCenter />
 
         <div className="relative">
           <button

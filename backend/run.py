@@ -10,6 +10,7 @@ from app.models.employee import Employee
 from app.models.department_model import Department
 from app.models.company_model import Company
 from app.models.audit_log import AuditLog
+from app.models.notification import Notification
 from app.database.mock_data import employees as mock_employees
 
 Base.metadata.create_all(bind=engine)
@@ -238,6 +239,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -255,3 +258,8 @@ def home():
     return {
         "message": "Employee API running successfully"
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

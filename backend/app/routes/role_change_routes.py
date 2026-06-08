@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from ..database.db import get_db
+from ..controllers.auth_controller import get_user_by_email
 from ..schemas.role_change_schema import RoleChangeRequestCreate, RoleChangeRequestResponse, RoleChangeRequestApprovalReject
 from ..controllers.role_change_controller import (
     create_role_change_request,
@@ -9,7 +12,7 @@ from ..controllers.role_change_controller import (
     approve_role_change_request,
     get_user_requests
 )
-from ..controllers.audit_controller import create_audit_log
+from ..controllers.activity_service import ActivityTracker
 
 router = APIRouter(prefix="/api/role-change", tags=["role-change"])
 
@@ -17,18 +20,31 @@ router = APIRouter(prefix="/api/role-change", tags=["role-change"])
 @router.post("/request", response_model=dict)
 def submit_role_change_request(
     request_data: RoleChangeRequestCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    request_user_email: Optional[str] = Header(None, alias="X-User-Email")
 ):
     """User submits a role change request"""
     try:
         new_request = create_role_change_request(db, request_data)
-        create_audit_log(
+        request_user = get_user_by_email(request_user_email) if request_user_email else None
+        requester_name = request_user["name"] if request_user else request_data.user_name
+        request_company_id = request_user["company_id"] if request_user else None
+
+        ActivityTracker.track_event(
             db,
-            user_name=request_data.user_name,
+            user_name=requester_name,
+            user_email=request_user_email or request_data.user_email,
             action="Role Change Requested",
-            related_name=request_data.user_name,
-            related_email=request_data.user_email,
+            employee_name=request_data.user_name,
+            employee_email=request_data.user_email,
+            company_id=request_company_id,
+            details={
+                "requested_role": request_data.requested_role,
+                "assigned_admin": request_data.admin_email,
+            },
+            notification_recipients=[request_user_email or request_data.user_email, request_data.admin_email],
         )
+        
         return {
             "success": True,
             "data": new_request.to_dict(),
@@ -76,7 +92,8 @@ def get_user_role_requests(
 def respond_to_role_change_request(
     request_id: int,
     response_data: RoleChangeRequestApprovalReject,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin_email_header: Optional[str] = Header(None, alias="X-User-Email")
 ):
     """Admin approves or rejects a role change request"""
     try:
@@ -85,12 +102,26 @@ def respond_to_role_change_request(
         if not updated_request:
             raise HTTPException(status_code=404, detail="Request not found")
 
-        create_audit_log(
+        request_user = get_user_by_email(updated_request.user_email)
+        request_company_id = request_user["company_id"] if request_user else None
+        audit_user_name = None
+        if admin_email_header:
+            admin_user = get_user_by_email(admin_email_header)
+            audit_user_name = admin_user["name"] if admin_user else admin_email_header
+        else:
+            audit_user_name = updated_request.admin_email
+
+        action = "Role Change Approved" if response_data.status == "Approved" else "Role Change Rejected"
+        ActivityTracker.track_event(
             db,
-            user_name=updated_request.admin_email,
-            action=("Role Change Approved" if response_data.status == "Approved" else "Role Change Rejected"),
-            related_name=updated_request.user_name,
-            related_email=updated_request.user_email,
+            user_name=audit_user_name,
+            user_email=admin_email_header or updated_request.admin_email,
+            action=action,
+            employee_name=updated_request.user_name,
+            employee_email=updated_request.user_email,
+            company_id=request_company_id,
+            details={"admin_comments": response_data.admin_comments or "None"},
+            notification_recipients=[updated_request.user_email, admin_email_header] if admin_email_header else [updated_request.user_email],
         )
         
         return {

@@ -24,8 +24,11 @@ def create_audit_log(
     return log
 
 
-def list_audit_logs(db, company_id: int = None, limit: int = 200):
+def list_audit_logs(db, company_id: int = None, limit: int = None):
     query = db.query(AuditLog)
     if company_id is not None:
         query = query.filter(AuditLog.company_id == company_id)
-    return query.order_by(AuditLog.timestamp.desc()).limit(limit).all()
+    query = query.order_by(AuditLog.timestamp.desc())
+    if limit is not None:
+        query = query.limit(limit)
+    return query.all()

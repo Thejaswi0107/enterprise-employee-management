@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { getDepartments, getEmployees, getDashboardAnalytics } from "../../services/api";
 import {
@@ -29,28 +29,74 @@ function Dashboard() {
   const [departments, setDepartments] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      const [employeeResponse, departmentResponse, analyticsResponse] = await Promise.all([
+        getEmployees(),
+        getDepartments(),
+        getDashboardAnalytics(),
+      ]);
+
+      setEmployees(employeeResponse.data || []);
+      setDepartments(departmentResponse.data || []);
+      setAnalytics(analyticsResponse.data || null);
+    } catch (error) {
+      console.error("Failed to load dashboard data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadDashboard = async () => {
-      try {
-        const [employeeResponse, departmentResponse, analyticsResponse] = await Promise.all([
-          getEmployees(),
-          getDepartments(),
-          getDashboardAnalytics(),
-        ]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadDashboard();
+  }, [activeCompany]);
 
-        setEmployees(employeeResponse.data || []);
-        setDepartments(departmentResponse.data || []);
-        setAnalytics(analyticsResponse.data || null);
-      } catch (error) {
-        console.error("Failed to load dashboard data", error);
-      } finally {
-        setLoading(false);
+  // Listen for employee changes and auto-refresh dashboard
+  useEffect(() => {
+    const handleEmployeesChanged = () => {
+      loadDashboard();
+    };
+
+    window.addEventListener("employeesChanged", handleEmployeesChanged);
+    return () => {
+      window.removeEventListener("employeesChanged", handleEmployeesChanged);
+    };
+  }, []);
+
+  // Listen for storage events for multi-tab sync
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === "employees_changed_at") {
+        loadDashboard();
       }
     };
 
-    loadDashboard();
-  }, [activeCompany]);
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  const handleRefreshDashboard = async () => {
+    setRefreshing(true);
+    try {
+      const [employeeResponse, departmentResponse, analyticsResponse] = await Promise.all([
+        getEmployees(),
+        getDepartments(),
+        getDashboardAnalytics(),
+      ]);
+
+      setEmployees(employeeResponse.data || []);
+      setDepartments(departmentResponse.data || []);
+      setAnalytics(analyticsResponse.data || null);
+    } catch (error) {
+      console.error("Failed to refresh dashboard data", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const totalEmployees = analytics?.totalEmployees ?? employees.length;
   const activeEmployees = analytics?.activeEmployees ?? employees.filter(
@@ -131,14 +177,6 @@ function Dashboard() {
     { day: "Sun", employees: Math.max(totalEmployees - 20, 0) },
   ];
 
-  const attendanceData = [
-    { day: "Mon", attendance: Math.min(attendanceRate + 3, 100) },
-    { day: "Tue", attendance: Math.min(attendanceRate + 1, 100) },
-    { day: "Wed", attendance: attendanceRate },
-    { day: "Thu", attendance: Math.max(attendanceRate - 4, 0) },
-    { day: "Fri", attendance: Math.min(attendanceRate + 2, 100) },
-  ];
-
   const recentEmployees = [...employees]
     .sort(
       (a, b) => new Date(b.joined_date) - new Date(a.joined_date)
@@ -162,14 +200,24 @@ function Dashboard() {
 
   return (
     <div className="w-full">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-800">
-          Dashboard
-        </h1>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-800">
+            Dashboard
+          </h1>
 
-        <p className="text-gray-500 mt-2">
-          Welcome back, {user?.name || "Team Member"}! Here's what's happening.
-        </p>
+          <p className="text-gray-500 mt-2">
+            Welcome back, {user?.name || "Team Member"}! Here's what's happening.
+          </p>
+        </div>
+
+        <button
+          onClick={handleRefreshDashboard}
+          disabled={refreshing}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
+        >
+          {refreshing ? "Refreshing..." : "Refresh"}
+        </button>
       </div>
 
       <div className="grid grid-cols-4 gap-5 mb-8">
