@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# Ensure backend/app is importable when running from the workspace root.
+ROOT_DIR = Path(__file__).resolve().parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
@@ -6,6 +14,9 @@ from app.routes.employee_routes import router as employee_router
 from app.routes.auth_routes import router as auth_router
 from app.routes.role_change_routes import router as role_change_router
 from app.routes.company_routes import router as company_router
+from app.routes.invitation_routes import router as invitation_router
+from app.routes.member_routes import router as member_router
+from app.routes.reactivation_routes import router as reactivation_router
 from app.models.employee import Employee
 from app.models.department_model import Department
 from app.models.company_model import Company
@@ -138,6 +149,17 @@ def migrate_legacy_schema():
             conn.execute(text("DROP TABLE employees"))
             conn.execute(text("ALTER TABLE employees_temp RENAME TO employees"))
 
+            employee_columns = [column["name"] for column in inspector.get_columns("employees")]
+
+        if "is_account_active" not in employee_columns:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN is_account_active BOOLEAN NOT NULL DEFAULT 1"))
+        if "deactivated_at" not in employee_columns:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN deactivated_at TEXT"))
+        if "deactivated_by_email" not in employee_columns:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN deactivated_by_email TEXT"))
+        if "deactivation_reason" not in employee_columns:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN deactivation_reason TEXT"))
+
         department_columns = [column["name"] for column in inspector.get_columns("departments")]
         if "company_id" not in department_columns:
             conn.execute(
@@ -251,7 +273,9 @@ app.include_router(employee_router)
 app.include_router(auth_router)
 app.include_router(role_change_router)
 app.include_router(company_router)
-
+app.include_router(invitation_router)
+app.include_router(member_router)
+app.include_router(reactivation_router)
 
 @app.get("/")
 def home():

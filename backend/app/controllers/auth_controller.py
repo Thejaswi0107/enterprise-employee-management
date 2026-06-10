@@ -33,6 +33,22 @@ AUTH_USERS = [
         "company_id": 2,
         "company": "Company B",
     },
+    {
+        "email": "teju@gmail.com",
+        "password": "test123",
+        "name": "THEJASWI",
+        "role": "user",
+        "company_id": 1,
+        "company": "Company A",
+    },
+    {
+        "email": "keerthu@gmail.com",
+        "password": "test123",
+        "name": "keerthana",
+        "role": "user",
+        "company_id": 1,
+        "company": "Company A",
+    },
 ]
 
 

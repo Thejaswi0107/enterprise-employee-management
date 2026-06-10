@@ -146,9 +146,14 @@ export default function NotificationCenter() {
                         {getActionIcon(notification.action)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 break-words">
-                          {notification.message}
-                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-gray-900 break-words">
+                            {notification.message}
+                          </p>
+                          <span className="text-[11px] uppercase tracking-widest text-gray-500">
+                            {notification.action}
+                          </span>
+                        </div>
                         <p className="text-xs text-gray-500 mt-1">
                           {formatTime(notification.timestamp)}
                         </p>

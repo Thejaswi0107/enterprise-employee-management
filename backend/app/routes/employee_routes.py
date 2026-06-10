@@ -34,19 +34,19 @@ router = APIRouter()
 
 
 def get_current_user(
-    user_email: str = Header(None, alias="X-User-Email"),
-    user_role: Optional[str] = Header(None, alias="X-User-Role"),
-    requested_company_id: Optional[int] = Header(None, alias="X-User-Company-Id"),
+    current_user_email: str = Header(None, alias="X-User-Email"),
+    current_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+    current_company_id: Optional[int] = Header(None, alias="X-User-Company-Id"),
 ):
-    if not user_email:
+    if not current_user_email:
         raise HTTPException(status_code=401, detail="Missing user authentication header")
 
-    user = get_user_by_email(user_email)
-    if not user and user_role in ("admin", "user"):
+    user = get_user_by_email(current_user_email)
+    if not user and current_user_role in ("admin", "user"):
         user = {
-            "email": user_email,
-            "name": user_email,
-            "role": user_role,
+            "email": current_user_email,
+            "name": current_user_email,
+            "role": current_user_role,
             "company_id": None,
             "company": None,
         }
@@ -55,19 +55,19 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid user")
 
     if user["role"] == "admin":
-        if requested_company_id is not None:
-            if requested_company_id not in (1, 2):
+        if current_company_id is not None:
+            if current_company_id not in (1, 2):
                 raise HTTPException(status_code=400, detail="Invalid company selection")
 
-            user["company_id"] = requested_company_id
-            user["company"] = "Company A" if requested_company_id == 1 else "Company B"
+            user["company_id"] = current_company_id
+            user["company"] = "Company A" if current_company_id == 1 else "Company B"
         else:
             user["company_id"] = None
     else:
-        if user["company_id"] is None and requested_company_id is not None:
-            user["company_id"] = requested_company_id
-            user["company"] = "Company A" if requested_company_id == 1 else "Company B"
-        if requested_company_id is not None and requested_company_id != user["company_id"]:
+        if user["company_id"] is None and current_company_id is not None:
+            user["company_id"] = current_company_id
+            user["company"] = "Company A" if current_company_id == 1 else "Company B"
+        if current_company_id is not None and current_company_id != user["company_id"]:
             raise HTTPException(status_code=403, detail="Company access denied")
 
     return user

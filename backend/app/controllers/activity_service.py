@@ -144,3 +144,4 @@ class ActivityTracker:
         }
 
         return action in tracked_actions
+    

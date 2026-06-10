@@ -9,11 +9,17 @@ import Settings from "../pages/dashboard/Settings";
 import RoleChangeManagement from "../pages/dashboard/RoleChangeManagement";
 import AuditLogs from "../pages/dashboard/AuditLogs";
 import Companies from "../pages/dashboard/Companies";
+import Invitations from "../pages/dashboard/Invitations";
+import Members from "../pages/dashboard/Members";
+import ReactivationRequests from "../pages/dashboard/ReactivationRequests";
+import AccountDeactivated from "../pages/dashboard/AccountDeactivated";
+import AcceptInvitation from "../pages/AcceptInvitation";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
       <Route path="/" element={<DashboardLayout />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="dashboard/employees" element={<Employees />} />
@@ -42,10 +48,38 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="dashboard/invitations"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Invitations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/members"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <Members />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard/reactivation-requests"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <ReactivationRequests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="dashboard/settings"
           element={
             <Settings />
           }
+        />
+        <Route
+          path="dashboard/account-deactivated"
+          element={<AccountDeactivated />}
         />
         <Route
           path="dashboard/role-change-management"

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Float
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from app.database.db import Base
+from datetime import datetime, timezone
 
 
 class Employee(Base):
@@ -20,6 +21,10 @@ class Employee(Base):
     salary = Column(Float, nullable=True)
     manager_name = Column(String, nullable=True)
     skills = Column(String, nullable=True)  # Comma-separated skills
+    is_account_active = Column(Boolean, nullable=False, default=True)  # Account deactivation status
+    deactivated_at = Column(DateTime, nullable=True)  # When account was deactivated
+    deactivated_by_email = Column(String, nullable=True)  # Admin who deactivated
+    deactivation_reason = Column(String, nullable=True)  # Reason for deactivation
 
     department = relationship("Department", back_populates="employees")
     company = relationship("Company", back_populates="employees")
@@ -41,4 +46,8 @@ class Employee(Base):
             "salary": self.salary,
             "manager_name": self.manager_name,
             "skills": self.skills,
+            "is_account_active": self.is_account_active,
+            "deactivated_at": self.deactivated_at.isoformat() if self.deactivated_at else None,
+            "deactivated_by_email": self.deactivated_by_email,
+            "deactivation_reason": self.deactivation_reason,
         }

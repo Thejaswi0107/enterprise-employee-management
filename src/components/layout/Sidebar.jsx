@@ -57,6 +57,42 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {isAdmin && (
             <NavLink
+              to="/dashboard/invitations"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <Building2 size={20} />
+              Invitations
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
+              to="/dashboard/members"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <Users size={20} />
+              Members
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
+              to="/dashboard/reactivation-requests"
+              className={({ isActive }) =>
+                isActive ? "nav-link active" : "nav-link"
+              }
+            >
+              <UserCircle size={20} />
+              Reactivation Requests
+            </NavLink>
+          )}
+
+          {isAdmin && (
+            <NavLink
               to="/dashboard/companies"
               className={({ isActive }) =>
                 isActive ? "nav-link active" : "nav-link"

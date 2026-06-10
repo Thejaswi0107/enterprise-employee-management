@@ -7,30 +7,38 @@ const API = axios.create({
   },
 });
 
-API.interceptors.request.use((config) => {
+const getAuthHeaders = () => {
   const token = localStorage.getItem("employee_token");
   const user = JSON.parse(localStorage.getItem("employee_user") || "null");
-
-  config.headers = config.headers || {};
+  const headers = {};
 
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    headers.Authorization = `Bearer ${token}`;
   }
 
   if (user?.email) {
-    config.headers["X-User-Email"] = user.email;
+    headers["X-User-Email"] = user.email;
   }
 
   if (user?.role) {
-    config.headers["X-User-Role"] = user.role;
+    headers["X-User-Role"] = user.role;
   }
 
   if (user?.company_id) {
-    config.headers["X-User-Company-Id"] = String(user.company_id);
+    headers["X-User-Company-Id"] = String(user.company_id);
   }
 
+  return headers;
+};
+
+API.interceptors.request.use((config) => {
+  const headers = getAuthHeaders();
+  config.headers = config.headers || {};
+  Object.assign(config.headers, headers);
   return config;
 });
+
+export { getAuthHeaders };
 
 const handleResponse = (response) => response.data;
 
@@ -608,12 +616,12 @@ export const searchEmployees = async (searchTerm = "", roleFilter = "", departme
   }
 };
 
-export const getNotifications = async () => {
+export const getNotifications = async (unreadOnly = false) => {
   try {
     const response = await API.get("/notifications", {
       params: {
         limit: 1000,
-        unread_only: true,
+        unread_only: unreadOnly,
       },
     });
     return {

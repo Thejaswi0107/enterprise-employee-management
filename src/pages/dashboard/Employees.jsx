@@ -7,6 +7,7 @@ import {
   deleteEmployee,
 } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 import EmployeeTable from "../../components/employees/EmployeeTable";
 import AddEmployeeModal from "../../components/employees/AddEmployeeModal";
@@ -31,11 +32,19 @@ const Employees = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] =
     useState("All Departments");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [sortKey, setSortKey] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
 
   const [currentPage, setCurrentPage] = useState(1);
   const employeesPerPage = 10;
+
+  // Initialize state - clear modal states on mount
+  useEffect(() => {
+    setDeleteEmployeeId(null);
+    setShowModal(false);
+    setEditingEmployee(null);
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -78,6 +87,20 @@ const Employees = () => {
 
   const { user, activeCompany } = useAuth();
   const isAdmin = user?.role === "admin";
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get("status");
+    setStatusFilter(status || "All");
+  }, [location.search]);
+
+  // When the status filter is changed via URL, refresh employees and reset paging
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchEmployees();
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchEmployees();
@@ -123,9 +146,15 @@ const Employees = () => {
           departmentFilter === "All Departments" ||
           employee.department === departmentFilter;
 
-        return matchesSearch && matchesDepartment;
+        const matchesStatus =
+          statusFilter === "All" ||
+          (employee.status &&
+            employee.status.toString().toLowerCase() ===
+              statusFilter.toString().toLowerCase());
+
+        return matchesSearch && matchesDepartment && matchesStatus;
       }),
-    [employees, departmentFilter, searchTerm]
+    [employees, departmentFilter, searchTerm, statusFilter]
   );
 
   const sortValue = (item) => {
@@ -350,6 +379,11 @@ const Employees = () => {
           Manage your team, review employee details, and monitor department
           activity from a single dashboard.
         </p>
+        {statusFilter !== "All" && (
+          <div className="filter-badge">
+            Showing <strong>{statusFilter}</strong> employees only
+          </div>
+        )}
       </div>
 
       <div className="stats-row">
@@ -389,6 +423,19 @@ const Employees = () => {
               </option>
             )
           )}
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
+          <option value="All">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+          <option value="Inactive">Inactive</option>
         </select>
 
         <div className="sort-group">
@@ -486,15 +533,16 @@ const Employees = () => {
         </div>
       </div>
 
-      <ConfirmationModal
-        show={Boolean(deleteEmployeeId)}
-        title="Delete Employee"
-        message="Are you sure you want to delete this employee?"
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={confirmDeleteEmployee}
-        onCancel={cancelDeleteEmployee}
-      />
+      {deleteEmployeeId && (
+        <ConfirmationModal
+          title="Delete Employee"
+          message="Are you sure you want to delete this employee?"
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={confirmDeleteEmployee}
+          onCancel={cancelDeleteEmployee}
+        />
+      )}
 
       {showModal && (
         <AddEmployeeModal

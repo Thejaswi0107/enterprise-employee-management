@@ -1,6 +1,31 @@
 from ..models.audit_log import AuditLog
 
 
+class AuditController:
+    @staticmethod
+    def log_action(
+        db,
+        user_name: str,
+        action: str,
+        related_name: str = None,
+        related_email: str = None,
+        company_id: int = None,
+        details: str = None,
+    ):
+        log = AuditLog(
+            user_name=user_name,
+            action=action,
+            related_name=related_name,
+            related_email=related_email,
+            company_id=company_id,
+            details=details,
+        )
+        db.add(log)
+        db.commit()
+        db.refresh(log)
+        return log
+
+
 def create_audit_log(
     db,
     user_name: str,
@@ -10,7 +35,8 @@ def create_audit_log(
     company_id: int = None,
     details: str = None,
 ):
-    log = AuditLog(
+    return AuditController.log_action(
+        db=db,
         user_name=user_name,
         action=action,
         related_name=related_name,
@@ -18,10 +44,6 @@ def create_audit_log(
         company_id=company_id,
         details=details,
     )
-    db.add(log)
-    db.commit()
-    db.refresh(log)
-    return log
 
 
 def list_audit_logs(db, company_id: int = None, limit: int = None):

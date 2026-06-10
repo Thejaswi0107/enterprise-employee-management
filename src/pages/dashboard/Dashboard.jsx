@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getDepartments, getEmployees, getDashboardAnalytics } from "../../services/api";
 import {
@@ -25,6 +26,8 @@ import {
 
 function Dashboard() {
   const { user, activeCompany } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const navigate = useNavigate();
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [analytics, setAnalytics] = useState(null);
@@ -98,11 +101,26 @@ function Dashboard() {
     }
   };
 
-  const totalEmployees = analytics?.totalEmployees ?? employees.length;
-  const activeEmployees = analytics?.activeEmployees ?? employees.filter(
+  // Calculate stats dynamically from employees data
+  // Filter employees by company for non-admin users
+  const filteredEmployees = isAdmin 
+    ? employees 
+    : employees.filter(emp => emp.company_id === user?.company_id);
+
+  // Calculate stats from filtered employees
+  const calculatedTotalEmployees = filteredEmployees.length;
+  const calculatedActiveEmployees = filteredEmployees.filter(
     (emp) => emp.status?.toLowerCase() === "active"
   ).length;
-  const totalDepartments = analytics?.totalDepartments ?? departments.length;
+  
+  // Get unique departments from employees in the company
+  const uniqueDepartments = new Set(filteredEmployees.map(emp => emp.department).filter(Boolean));
+  const calculatedTotalDepartments = uniqueDepartments.size;
+
+  // Use calculated stats, fallback to analytics if available
+  const totalEmployees = analytics?.totalEmployees ?? calculatedTotalEmployees;
+  const activeEmployees = analytics?.activeEmployees ?? calculatedActiveEmployees;
+  const totalDepartments = analytics?.totalDepartments ?? calculatedTotalDepartments;
   const pendingRequests = analytics?.pendingRequests ?? 0;
   const attendanceRate = totalEmployees
     ? Math.round((activeEmployees / totalEmployees) * 100)
@@ -114,25 +132,34 @@ function Dashboard() {
       value: totalEmployees,
       icon: <FaUsers className="text-blue-600" />,
       bg: "bg-blue-100",
+      path: "/dashboard/employees",
     },
     {
       title: "Active Employees",
       value: activeEmployees,
       icon: <FaUserCheck className="text-green-600" />,
       bg: "bg-green-100",
+      path: "/dashboard/employees?status=Active",
     },
-    {
-      title: "Departments",
-      value: totalDepartments,
-      icon: <FaBuilding className="text-orange-600" />,
-      bg: "bg-orange-100",
-    },
-    {
-      title: "Pending Requests",
-      value: pendingRequests,
-      icon: <FaBell className="text-purple-600" />,
-      bg: "bg-purple-100",
-    },
+    ...(
+      isAdmin
+        ? [
+            {
+              title: "Departments",
+              value: totalDepartments,
+              icon: <FaBuilding className="text-orange-600" />,
+              bg: "bg-orange-100",
+              path: "/dashboard/departments",
+            },
+            {
+              title: "Pending Requests",
+              value: pendingRequests,
+              icon: <FaBell className="text-purple-600" />,
+              bg: "bg-purple-100",
+              path: "/dashboard/role-change-management",
+            },
+          ]
+        : [])
   ];
 
   const departmentData = analytics?.employeesByDepartment?.length
@@ -140,20 +167,20 @@ function Dashboard() {
         name: entry.department,
         value: entry.count,
       }))
-    : departments.map((department) => {
-        const departmentCount = employees.filter(
-          (employee) => employee.department === department.name
+    : Array.from(uniqueDepartments).map((departmentName) => {
+        const departmentCount = filteredEmployees.filter(
+          (employee) => employee.department === departmentName
         ).length;
 
         return {
-          name: department.name,
+          name: departmentName,
           value: departmentCount || 1,
         };
       });
 
   const roleData = analytics?.employeesByRole?.length
     ? analytics.employeesByRole
-    : employees.reduce((acc, employee) => {
+    : filteredEmployees.reduce((acc, employee) => {
         const existing = acc.find((item) => item.role === employee.role);
         if (existing) existing.count += 1;
         else acc.push({ role: employee.role || "Unknown", count: 1 });
@@ -177,7 +204,7 @@ function Dashboard() {
     { day: "Sun", employees: Math.max(totalEmployees - 20, 0) },
   ];
 
-  const recentEmployees = [...employees]
+  const recentEmployees = [...filteredEmployees]
     .sort(
       (a, b) => new Date(b.joined_date) - new Date(a.joined_date)
     )
@@ -209,6 +236,11 @@ function Dashboard() {
           <p className="text-gray-500 mt-2">
             Welcome back, {user?.name || "Team Member"}! Here's what's happening.
           </p>
+          {!isAdmin && (
+            <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-600 shadow-sm">
+              This is your user dashboard. Administrator users can manage company members, invitations, and reactivation requests from the sidebar.
+            </div>
+          )}
         </div>
 
         <button
@@ -222,9 +254,13 @@ function Dashboard() {
 
       <div className="grid grid-cols-4 gap-5 mb-8">
         {stats.map((item, index) => (
-          <div
+          <button
             key={index}
-            className="bg-white rounded-2xl shadow-sm border p-5"
+            onClick={() => {
+              const [pathname, query] = item.path.split("?");
+              navigate({ pathname, search: query ? `?${query}` : "" });
+            }}
+            className="text-left bg-white rounded-2xl shadow-sm border p-5 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             <div className="flex justify-between items-center">
               <div>
@@ -236,9 +272,37 @@ function Dashboard() {
                 {item.icon}
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      {isAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-8">
+          <button
+            onClick={() => navigate("/dashboard/invitations")}
+            className="text-left bg-white rounded-2xl shadow-sm border p-6 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <h3 className="text-lg font-semibold mb-2">Manage Invitations</h3>
+            <p className="text-sm text-gray-600">Create and revoke company invitations for new users.</p>
+          </button>
+
+          <button
+            onClick={() => navigate("/dashboard/members")}
+            className="text-left bg-white rounded-2xl shadow-sm border p-6 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <h3 className="text-lg font-semibold mb-2">Company Members</h3>
+            <p className="text-sm text-gray-600">View active and deactivated members across your company.</p>
+          </button>
+
+          <button
+            onClick={() => navigate("/dashboard/reactivation-requests")}
+            className="text-left bg-white rounded-2xl shadow-sm border p-6 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            <h3 className="text-lg font-semibold mb-2">Reactivation Requests</h3>
+            <p className="text-sm text-gray-600">Review and approve or reject user reactivation submissions.</p>
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div className="bg-white rounded-2xl shadow-sm border p-6">
