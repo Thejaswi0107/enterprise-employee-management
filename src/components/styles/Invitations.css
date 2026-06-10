@@ -314,6 +314,179 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
+/* Section Styles */
+.section {
+  margin-bottom: 50px;
+}
+
+.section h2 {
+  font-size: 1.8rem;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  font-weight: 600;
+  border-bottom: 2px solid #0066cc;
+  padding-bottom: 10px;
+}
+
+/* Inline Invitation Form */
+.inline-invite-form {
+  display: grid;
+  grid-template-columns: 1fr 150px 150px;
+  gap: 12px;
+  margin-bottom: 30px;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.inline-invite-form input,
+.inline-invite-form select {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.inline-invite-form input:focus,
+.inline-invite-form select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.role-select {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: white;
+}
+
+.invitations-stat {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+/* Members Section */
+.members-stats {
+  background: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  color: #555;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tab-button.active {
+  color: #0066cc;
+  border-bottom-color: #0066cc;
+}
+
+.tab-button:hover {
+  color: #0066cc;
+}
+
+.no-members {
+  background: white;
+  padding: 40px 20px;
+  border-radius: 8px;
+  text-align: center;
+  color: #999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.members-table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.members-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.members-table thead {
+  background: #f5f5f5;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.members-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.members-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.members-table tr:hover {
+  background: #f9f9f9;
+}
+
+.btn-deactivate {
+  padding: 6px 12px;
+  background: #ffebee;
+  color: #c62828;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-deactivate:hover {
+  background: #c62828;
+  color: white;
+}
+
+.btn-danger {
+  padding: 10px 24px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: #a01818;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .invitations-container {
@@ -347,5 +520,18 @@ textarea:focus {
 
   .invitation-actions {
     flex-direction: column;
+  }
+
+  .inline-invite-form {
+    grid-template-columns: 1fr;
+  }
+
+  .members-table table {
+    font-size: 0.85rem;
+  }
+
+  .members-table th,
+  .members-table td {
+    padding: 10px;
   }
 }

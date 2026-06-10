@@ -30,7 +30,7 @@ from app.models.role_change_request import RoleChangeRequest
 from app.models.audit_log import AuditLog
 from app.schemas.employee_schema import EmployeeCreate
 
-router = APIRouter()
+router = APIRouter(prefix="/api", tags=["employees"])
 
 
 def get_current_user(

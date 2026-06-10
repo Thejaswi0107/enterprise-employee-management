@@ -52,7 +52,8 @@ AUTH_USERS = [
 ]
 
 
-def authenticate_user(email: str, password: str) -> Optional[dict]:
+def authenticate_user(email: str, password: str, db=None) -> Optional[dict]:
+    # First check AUTH_USERS (in-memory list)
     for user in AUTH_USERS:
         if user["email"] == email and user["password"] == password:
             return {
@@ -61,6 +62,23 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
                 "role": user["role"],
                 "company_id": user["company_id"],
                 "company": user["company"],
+            }
+
+    # Then check Employee table in database (for users created via invitation)
+    if db:
+        from app.models.employee import Employee
+        employee = db.query(Employee).filter(
+            Employee.email == email,
+            Employee.password == password
+        ).first()
+        
+        if employee:
+            return {
+                "email": employee.email,
+                "name": employee.name,
+                "role": employee.role,
+                "company_id": employee.company_id,
+                "company": employee.company.name if employee.company else f"Company {employee.company_id}",
             }
 
     return None

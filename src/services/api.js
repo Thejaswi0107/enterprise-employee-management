@@ -225,7 +225,7 @@ const getRegisteredUsers = () => {
 
 export const getCompanies = async () => {
   try {
-    const response = await API.get("/companies");
+    const response = await API.get("/api/companies");
     return handleResponse(response);
   } catch (error) {
     console.warn("Failed to load companies", error.message);
@@ -526,7 +526,7 @@ export const deleteEmployee = async (id) => {
 
 export const getDepartments = async () => {
   try {
-    const response = await API.get("/departments");
+    const response = await API.get("/api/departments");
     return handleResponse(response);
   } catch (error) {
     console.warn("Error getting departments via API", error.message);
@@ -545,7 +545,7 @@ export const getDepartments = async () => {
 
 export const getAuditLogs = async () => {
   try {
-    const response = await API.get("/audit-logs");
+    const response = await API.get("/api/audit-logs");
     return {
       success: response.data?.success || true,
       data: response.data?.data || [],
@@ -568,7 +568,7 @@ export const getAuditLogs = async () => {
 
 export const getDashboardAnalytics = async () => {
   try {
-    const response = await API.get("/analytics/dashboard");
+    const response = await API.get("/api/analytics/dashboard");
     return {
       success: response.data?.success || true,
       data: response.data?.data || {},
@@ -618,7 +618,7 @@ export const searchEmployees = async (searchTerm = "", roleFilter = "", departme
 
 export const getNotifications = async (unreadOnly = false) => {
   try {
-    const response = await API.get("/notifications", {
+    const response = await API.get("/api/notifications", {
       params: {
         limit: 1000,
         unread_only: unreadOnly,
@@ -648,7 +648,7 @@ export const getNotifications = async (unreadOnly = false) => {
 
 export const clearNotifications = async () => {
   try {
-    const response = await API.post("/notifications/clear-all");
+    const response = await API.post("/api/notifications/clear-all");
     dispatchSystemUpdate();
     return {
       success: response.data?.success || true,

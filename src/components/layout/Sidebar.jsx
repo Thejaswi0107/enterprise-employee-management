@@ -69,30 +69,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {isAdmin && (
             <NavLink
-              to="/dashboard/members"
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              <Users size={20} />
-              Members
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/dashboard/reactivation-requests"
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              <UserCircle size={20} />
-              Reactivation Requests
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
               to="/dashboard/companies"
               className={({ isActive }) =>
                 isActive ? "nav-link active" : "nav-link"
@@ -124,18 +100,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             >
               <CalendarCheck size={20} />
               Attendance
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/dashboard/role-change-management"
-              className={({ isActive }) =>
-                isActive ? "nav-link active" : "nav-link"
-              }
-            >
-              <UserCircle size={20} />
-              Role Requests
             </NavLink>
           )}
 

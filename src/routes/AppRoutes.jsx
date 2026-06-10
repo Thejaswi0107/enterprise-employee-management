@@ -6,12 +6,9 @@ import Employees from "../pages/dashboard/Employees";
 import Departments from "../pages/dashboard/Departments";
 import Attendance from "../pages/dashboard/Attendance";
 import Settings from "../pages/dashboard/Settings";
-import RoleChangeManagement from "../pages/dashboard/RoleChangeManagement";
 import AuditLogs from "../pages/dashboard/AuditLogs";
 import Companies from "../pages/dashboard/Companies";
-import Invitations from "../pages/dashboard/Invitations";
-import Members from "../pages/dashboard/Members";
-import ReactivationRequests from "../pages/dashboard/ReactivationRequests";
+import InvitationsAndMembers from "../pages/dashboard/InvitationsAndMembers";
 import AccountDeactivated from "../pages/dashboard/AccountDeactivated";
 import AcceptInvitation from "../pages/AcceptInvitation";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -51,23 +48,7 @@ const AppRoutes = () => {
           path="dashboard/invitations"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
-              <Invitations />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="dashboard/members"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <Members />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="dashboard/reactivation-requests"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <ReactivationRequests />
+              <InvitationsAndMembers />
             </ProtectedRoute>
           }
         />
@@ -80,14 +61,6 @@ const AppRoutes = () => {
         <Route
           path="dashboard/account-deactivated"
           element={<AccountDeactivated />}
-        />
-        <Route
-          path="dashboard/role-change-management"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <RoleChangeManagement />
-            </ProtectedRoute>
-          }
         />
         <Route
           path="dashboard/audit-logs"

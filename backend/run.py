@@ -153,6 +153,8 @@ def migrate_legacy_schema():
 
         if "is_account_active" not in employee_columns:
             conn.execute(text("ALTER TABLE employees ADD COLUMN is_account_active BOOLEAN NOT NULL DEFAULT 1"))
+        if "password" not in employee_columns:
+            conn.execute(text("ALTER TABLE employees ADD COLUMN password TEXT"))
         if "deactivated_at" not in employee_columns:
             conn.execute(text("ALTER TABLE employees ADD COLUMN deactivated_at TEXT"))
         if "deactivated_by_email" not in employee_columns:

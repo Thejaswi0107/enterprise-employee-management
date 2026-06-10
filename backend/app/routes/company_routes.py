@@ -6,7 +6,7 @@ from app.controllers.auth_controller import AUTH_USERS, get_user_by_email
 from app.models.company_model import Company
 from app.models.employee import Employee
 
-router = APIRouter()
+router = APIRouter(prefix="/api/companies", tags=["companies"])
 
 
 def get_current_user(

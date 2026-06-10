@@ -326,6 +326,7 @@ class InvitationController:
                 # Update existing employee instead of creating new one
                 existing_employee.name = name
                 existing_employee.role = role
+                existing_employee.password = password
                 existing_employee.is_account_active = True
                 existing_employee.status = "Active"
                 existing_employee.joined_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -344,6 +345,7 @@ class InvitationController:
                     status="Active",
                     joined_date=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
                     is_account_active=True,  # Account is active when created
+                    password=password,
                     phone=None,
                     date_of_birth=None,
                     address=None,

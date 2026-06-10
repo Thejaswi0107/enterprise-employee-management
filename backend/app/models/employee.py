@@ -21,6 +21,7 @@ class Employee(Base):
     salary = Column(Float, nullable=True)
     manager_name = Column(String, nullable=True)
     skills = Column(String, nullable=True)  # Comma-separated skills
+    password = Column(String, nullable=True)  # Password for users who signed up via invitation
     is_account_active = Column(Boolean, nullable=False, default=True)  # Account deactivation status
     deactivated_at = Column(DateTime, nullable=True)  # When account was deactivated
     deactivated_by_email = Column(String, nullable=True)  # Admin who deactivated

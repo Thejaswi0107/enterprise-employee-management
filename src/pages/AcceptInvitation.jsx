@@ -13,6 +13,8 @@ const AcceptInvitation = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    role: '',
+    company_id: '',
     password: '',
     confirmPassword: ''
   });
@@ -35,7 +37,9 @@ const AcceptInvitation = () => {
       setInvitation(data.invitation);
       setFormData(prev => ({
         ...prev,
-        email: data.invitation.email
+        email: data.invitation.email,
+        role: data.invitation.role || '',
+        company_id: data.invitation.company_id || ''
       }));
       setError(null);
     } catch (err) {
@@ -156,6 +160,22 @@ const AcceptInvitation = () => {
             value={formData.email}
             disabled
             placeholder="Email address"
+            style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+          />
+
+          <input
+            type="text"
+            value={formData.role === 'user' ? 'User' : 'Admin'}
+            disabled
+            placeholder="Role"
+            style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+          />
+
+          <input
+            type="text"
+            value={formData.company_id === 1 ? 'Company A' : formData.company_id === 2 ? 'Company B' : 'Unknown'}
+            disabled
+            placeholder="Company"
             style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
           />
 
